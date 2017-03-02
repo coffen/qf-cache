@@ -20,8 +20,8 @@ package com.qf.cache;
  */
 public enum CacheSaveConditionEnum {
 	
-	IF_EXISTS,		// 存在时才缓存
-	IF_NOT_EXISTS,	// 不存在时才缓存
+	IF_EXISTS,		// 缓存对象已存在时才缓存
+	IF_NOT_EXISTS,	// 缓存对象不存在时才缓存
 	ALWAYS;			// 总是缓存
 
 }

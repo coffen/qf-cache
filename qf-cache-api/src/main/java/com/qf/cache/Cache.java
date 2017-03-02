@@ -51,11 +51,10 @@ public interface Cache {
 	 * 
 	 * @param name			缓存名称
 	 * @param keys  		待查询键值
-	 * @param clazz 		对象类型
 	 * 
 	 * @return 返回缓存对象映射表
 	 */
-	public <T> Map<Object, T> get(String name, String[] keys, Class<T> clazz);
+	public <T> Map<Object, T> get(String name, String[] keys);
 	
 	/**
 	 * <p> 从指定缓存中删除多个缓存键值

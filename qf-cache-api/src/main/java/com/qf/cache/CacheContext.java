@@ -1,5 +1,12 @@
 package com.qf.cache;
 
+import com.qf.cache.operation.CacheClearOperation;
+import com.qf.cache.operation.CacheEvictOperation;
+import com.qf.cache.operation.CacheGetOperation;
+import com.qf.cache.operation.CacheKeysOperation;
+import com.qf.cache.operation.CacheSaveOperation;
+import com.qf.cache.operation.CacheStatOperation;
+
 /**
  * 
  * <p>
@@ -20,6 +27,16 @@ package com.qf.cache;
  */
 public interface CacheContext {
 	
+	public void save(CacheSaveOperation operation);
 	
+	public void keys(CacheKeysOperation operation);
+	
+	public void get(CacheGetOperation operation);
+	
+	public void evict(CacheEvictOperation operation);
+	
+	public void clear(CacheClearOperation operation);
+	
+	public void stat(CacheStatOperation operation);
 	
 }
