@@ -5,7 +5,7 @@ package com.qf.cache;
  * <p>
  * Project Name: C2C商城
  * <br>
- * Description: 缓存操作
+ * Description: 缓存操作接口
  * <br>
  * File Name: CacheOperation.java
  * <br>

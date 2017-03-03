@@ -8,7 +8,7 @@ import java.util.Map;
  * <p>
  * Project Name: C2C商城
  * <br>
- * Description: 缓存
+ * Description: 缓存接口
  * <br>
  * File Name: Cache.java
  * <br>

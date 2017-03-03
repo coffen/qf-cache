@@ -5,7 +5,7 @@ package com.qf.cache;
  * <p>
  * Project Name: C2C商城
  * <br>
- * Description: 缓存策略
+ * Description: 缓存策略接口
  * <br>
  * File Name: CachePolicy.java
  * <br>
@@ -18,6 +18,14 @@ package com.qf.cache;
  * @version: v1.0
  *
  */
-public interface CachePolicy {
+public interface CachePolicy<T extends CacheOperation> {
+	
+	/**
+	 * 修改缓存操作
+	 * 
+	 * @param operation
+	 * @return
+	 */
+	public T apply(T operation);
 	
 }

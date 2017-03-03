@@ -39,4 +39,6 @@ public interface CacheContext {
 	
 	public void stat(CacheStatOperation operation);
 	
+	public void execute(CacheOperation operation);
+	
 }

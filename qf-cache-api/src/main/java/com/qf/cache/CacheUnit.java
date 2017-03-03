@@ -29,7 +29,7 @@ public class CacheUnit {
 	
 	private String namespace;					// 名称空间
 	private Serializer serializer;				// 序列化工具
-	private List<CachePolicy> cachePolicies;	// 缓存策略
+	private List<CachePolicy<?>> cachePolicies;	// 缓存策略
 	
 	public CacheUnit(String namespace) throws CacheCreateException {
 		this(namespace, null);
@@ -51,11 +51,11 @@ public class CacheUnit {
 		return serializer;
 	}
 	
-	public void addCachePolicy(CachePolicy policy) {
+	public void addCachePolicy(CachePolicy<?> policy) {
 		this.cachePolicies.add(policy);
 	}
 	
-	public List<CachePolicy> getCachePolicies() {
+	public List<CachePolicy<?>> getCachePolicies() {
 		return Collections.unmodifiableList(cachePolicies);
 	}
 	
