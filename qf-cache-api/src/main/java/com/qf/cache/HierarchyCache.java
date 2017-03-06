@@ -25,13 +25,13 @@ public interface HierarchyCache extends Cache {
 	 * 
 	 * @return
 	 */
-	Cache getLocalCache();
+	public Cache getLocalCache();
 	
 	/**
 	 * 获取分布式缓存
 	 * 
 	 * @return
 	 */
-	Cache getShardedCache();
+	public Cache getShardedCache();
 
 }

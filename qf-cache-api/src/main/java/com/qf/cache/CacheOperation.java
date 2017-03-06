@@ -19,5 +19,12 @@ package com.qf.cache;
  *
  */
 public interface CacheOperation {
+	
+	/**
+	 * 获取缓存名称空间
+	 * 
+	 * @return
+	 */
+	public String getNamespace();
 
 }

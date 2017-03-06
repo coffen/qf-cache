@@ -1,7 +1,10 @@
 package com.qf.cache;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.qf.cache.exception.CacheNotExistsException;
 import com.qf.cache.exception.CacheOperateException;
@@ -36,41 +39,48 @@ public class AbstractCacheContext implements CacheContext {
 
 	@Override
 	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {
-		
+		Cache cache = getCache(operation);
 	}
 
 	@Override
-	public void keys(CacheKeysOperation operation) {
-		
+	public List<String> keys(CacheKeysOperation operation) throws CacheNotExistsException, CacheOperateException {
+		Cache cache = getCache(operation);
 	}
 
 	@Override
-	public void get(CacheGetOperation operation) {
-		
+	public Map<String, Object> get(CacheGetOperation operation) throws CacheNotExistsException, CacheOperateException {
+		Cache cache = getCache(operation);
 	}
 
 	@Override
-	public void evict(CacheEvictOperation operation) {
-		
+	public void evict(CacheEvictOperation operation) throws CacheNotExistsException, CacheOperateException {
+		Cache cache = getCache(operation);
 	}
 
 	@Override
-	public void clear(CacheClearOperation operation) {
-		
+	public void clear(CacheClearOperation operation) throws CacheNotExistsException, CacheOperateException {
+		Cache cache = getCache(operation);
 	}
 
 	@Override
-	public void stat(CacheStatOperation operation) {
-		
+	public CacheInfo stat(CacheStatOperation operation) throws CacheNotExistsException, CacheOperateException {
+		Cache cache = getCache(operation);
 	}
 
 	@Override
-	public void execute(CacheOperation operation) {
-		
+	public void execute(CacheOperation operation) throws CacheNotExistsException, CacheOperateException {
+		Cache cache = getCache(operation);
 	}
 	
-	private Cache getCache() {
-		
+	private Cache getCache(CacheOperation operation) throws CacheNotExistsException {
+		if (operation == null || StringUtils.isBlank(operation.getNamespace())) {
+			throw new CacheNotExistsException("Cache namespace is empty.");
+		}
+		Cache cache = cacheMap.get(operation.getNamespace());
+		if (cache == null) {
+			throw new CacheNotExistsException("Cache not found: " + operation.getNamespace());
+		}
+		return cache;
 	}
 
 }

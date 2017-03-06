@@ -1,5 +1,10 @@
 package com.qf.cache;
 
+import java.util.List;
+import java.util.Map;
+
+import com.qf.cache.exception.CacheNotExistsException;
+import com.qf.cache.exception.CacheOperateException;
 import com.qf.cache.operation.CacheClearOperation;
 import com.qf.cache.operation.CacheEvictOperation;
 import com.qf.cache.operation.CacheGetOperation;
@@ -27,18 +32,70 @@ import com.qf.cache.operation.CacheStatOperation;
  */
 public interface CacheContext {
 	
-	public void save(CacheSaveOperation operation);
+	/**
+	 * 缓存保存操作
+	 * 
+	 * @param operation
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
+	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
-	public void keys(CacheKeysOperation operation);
+	/**
+	 * 缓存键值列表操作
+	 * 
+	 * @param operation
+	 * @return
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
+	public List<String> keys(CacheKeysOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
-	public void get(CacheGetOperation operation);
+	/**
+	 * 获取缓存对象操作
+	 * 
+	 * @param operation
+	 * @return
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
+	public Map<String, Object> get(CacheGetOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
-	public void evict(CacheEvictOperation operation);
+	/**
+	 * 删除缓存操作
+	 * 
+	 * @param operation
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
+	public void evict(CacheEvictOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
-	public void clear(CacheClearOperation operation);
+	/**
+	 * 清空缓存操作
+	 * 
+	 * @param operation
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
+	public void clear(CacheClearOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
-	public void stat(CacheStatOperation operation);
+	/**
+	 * 缓存信息统计操作
+	 * 
+	 * @param operation
+	 * @return
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
+	public CacheInfo stat(CacheStatOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
-	public void execute(CacheOperation operation);
+	/**
+	 * 缓存通用操作
+	 * 
+	 * @param operation
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
+	public void execute(CacheOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
 }

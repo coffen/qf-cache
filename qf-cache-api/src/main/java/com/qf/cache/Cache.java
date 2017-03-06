@@ -49,12 +49,11 @@ public interface Cache {
 	/**
 	 * <p> 在指定缓存中查询多个缓存键
 	 * 
-	 * @param name			缓存名称
-	 * @param keys  		待查询键值
-	 * 
-	 * @return 返回缓存对象映射表
+	 * @param name
+	 * @param keys
+	 * @return
 	 */
-	public <T> Map<Object, T> get(String name, String[] keys);
+	public List<Object> get(String name, String[] keys);
 	
 	/**
 	 * <p> 从指定缓存中删除多个缓存键值
