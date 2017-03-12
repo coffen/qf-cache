@@ -89,13 +89,4 @@ public interface CacheContext {
 	 */
 	public CacheInfo stat(CacheStatOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
-	/**
-	 * 缓存通用操作
-	 * 
-	 * @param operation
-	 * @throws CacheNotExistsException
-	 * @throws CacheOperateException
-	 */
-	public void execute(CacheOperation operation) throws CacheNotExistsException, CacheOperateException;
-	
 }
