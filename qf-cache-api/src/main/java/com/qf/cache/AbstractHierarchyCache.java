@@ -25,7 +25,7 @@ import org.apache.commons.collections4.CollectionUtils;
  * @version: v1.0
  *
  */
-public class AbstractHierarchyCache implements HierarchyCache {
+public abstract class AbstractHierarchyCache implements HierarchyCache {
 	
 	private final Cache local;
 	private final Cache sharded;
