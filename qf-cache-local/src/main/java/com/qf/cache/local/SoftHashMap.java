@@ -19,7 +19,7 @@ import org.apache.commons.collections4.CollectionUtils;
  * <p>
  * Project Name: C2C商城
  * <br>
- * Description: 
+ * Description: SoftHashMap
  * <br>
  * File Name: SoftHashMap.java
  * <br>

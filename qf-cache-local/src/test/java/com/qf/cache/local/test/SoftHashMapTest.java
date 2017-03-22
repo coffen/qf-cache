@@ -12,7 +12,7 @@ public class SoftHashMapTest {
 	public void testMap() {
 		SoftHashMap<String, String> map = new SoftHashMap<String, String>();
 	//	Map<String, String> map = new HashMap<String, String>();
-		for (int i = 0; i < 10000; i++) {
+		for (int i = 0; i < 10; i++) {
 			StringBuffer sb = new StringBuffer();
 			for (int j = 0; j < 100; j++) {
 				sb.append(UUID.randomUUID().toString().replace("-", ""));
