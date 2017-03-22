@@ -48,7 +48,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Map<K,V> {
     }
     
     public SoftHashMap(int initialCapacity, float loadFactor) {
-    	map = new SoftHashMap<>(initialCapacity, loadFactor);
+    	map = new SoftHashMap<K, SoftValue>(initialCapacity, loadFactor);
     	init();
     }
     
@@ -181,9 +181,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Map<K,V> {
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public void run() {
-			System.out.println("XXXX");
-			
+		public void run() {		
 	        for (Object obj; (obj = queue.poll()) != null; ) {
 	            synchronized (queue) {
 	            	SoftValue sv = (SoftValue)obj;
