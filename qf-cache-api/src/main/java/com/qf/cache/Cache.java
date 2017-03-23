@@ -3,6 +3,8 @@ package com.qf.cache;
 import java.util.List;
 import java.util.Map;
 
+import com.qf.cache.exception.CacheOperateException;
+
 /**
  * 
  * <p>
@@ -33,18 +35,7 @@ public interface Cache {
 	 * 
 	 * @return 成功缓存对象个数
 	 */	
-	public int put(String name, Map<String, Object> keyValue, Long expire, CacheSaveConditionEnum condition);
-	
-	/**
-	 * <p> 在指定缓存中分页查询键列表
-	 * 
-	 * @param name			缓存名称
-	 * @param start  		开始记录
-	 * @param offset		查询个数
-	 * 
-	 * @return 返回缓存键列表
-	 */
-	public List<String> keys(String name, Integer start, Integer offset);
+	public int put(String name, Map<String, Object> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException;
 	
 	/**
 	 * <p> 在指定缓存中查询多个缓存键
@@ -53,7 +44,7 @@ public interface Cache {
 	 * @param keys
 	 * @return
 	 */
-	public List<Object> get(String name, String[] keys);
+	public List<Object> get(String name, String[] keys) throws CacheOperateException;
 	
 	/**
 	 * <p> 从指定缓存中删除多个缓存键值
@@ -63,7 +54,7 @@ public interface Cache {
 	 * 
 	 * @return 成功删除键值个数
 	 */
-	public int evict(String name, String[] keys);
+	public int evict(String name, String[] keys) throws CacheOperateException;
 	
 	/**
 	 * <p> 清空缓存
@@ -72,7 +63,7 @@ public interface Cache {
 	 * 
 	 * @return 成功清空个数
 	 */
-	public int clear(String name);
+	public int clear(String name) throws CacheOperateException;
 	
 	/**
 	 * <p> 查询缓存统计信息
@@ -81,6 +72,6 @@ public interface Cache {
 	 * 
 	 * @return CacheInfo
 	 */
-	public CacheInfo stat(String name);
+	public CacheInfo stat(String name) throws CacheOperateException;
 
 }

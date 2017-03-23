@@ -1,6 +1,5 @@
 package com.qf.cache;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +11,6 @@ import com.qf.cache.exception.CacheOperateException;
 import com.qf.cache.operation.CacheClearOperation;
 import com.qf.cache.operation.CacheEvictOperation;
 import com.qf.cache.operation.CacheGetOperation;
-import com.qf.cache.operation.CacheKeysOperation;
 import com.qf.cache.operation.CacheSaveOperation;
 import com.qf.cache.operation.CacheStatOperation;
 
@@ -42,13 +40,6 @@ public abstract class AbstractCacheContext implements CacheContext {
 	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
 		cache.put(operation.getNamespace(), operation.getKeyValue(), operation.getExpire(), operation.getCondition());
-	}
-
-	@Override
-	public List<String> keys(CacheKeysOperation operation) throws CacheNotExistsException, CacheOperateException {
-		Cache cache = getCache(operation);
-		List<String> list = cache.keys(operation.getNamespace(), operation.getStart(), operation.getOffset());
-		return list == null ? new ArrayList<String>() : list;
 	}
 
 	@Override

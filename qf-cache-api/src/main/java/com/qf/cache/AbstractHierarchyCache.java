@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 
+import com.qf.cache.exception.CacheOperateException;
+
 /**
  * 
  * <p>
@@ -36,22 +38,14 @@ public abstract class AbstractHierarchyCache implements HierarchyCache {
 	}
 
 	@Override
-	public int put(String name, Map<String, Object> keyValue, Long expire, CacheSaveConditionEnum condition) {
+	public int put(String name, Map<String, Object> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException {
 		local.put(name, keyValue, expire, condition);
 		int count = sharded.put(name, keyValue, expire, condition);
 		return count;
 	}
 
 	@Override
-	public List<String> keys(String name, Integer start, Integer offset) {
-		if (sharded != null) {
-			return sharded.keys(name, start, offset);
-		}
-		return new ArrayList<String>();
-	}
-
-	@Override
-	public List<Object> get(String name, String[] keys) {
+	public List<Object> get(String name, String[] keys) throws CacheOperateException {
 		List<Object> values = local.get(name, keys);
 		List<String> remained = new ArrayList<String>();
 		List<Integer> indexs = new ArrayList<Integer>();
@@ -76,21 +70,21 @@ public abstract class AbstractHierarchyCache implements HierarchyCache {
 	}
 
 	@Override
-	public int evict(String name, String[] keys) {
+	public int evict(String name, String[] keys) throws CacheOperateException {
 		local.evict(name, keys);
 		sharded.evict(name, keys);
 		return keys.length;
 	}
 
 	@Override
-	public int clear(String name) {
+	public int clear(String name) throws CacheOperateException {
 		local.clear(name);
 		sharded.clear(name);
 		return 1;
 	}
 
 	@Override
-	public CacheInfo stat(String name) {
+	public CacheInfo stat(String name) throws CacheOperateException {
 		return sharded.stat(name);
 	}
 
