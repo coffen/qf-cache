@@ -35,7 +35,7 @@ public interface Cache {
 	 * 
 	 * @return 成功缓存对象个数
 	 */	
-	public int put(String name, Map<String, Object> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException;
+	public <T> int put(String name, Map<String, T> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException;
 	
 	/**
 	 * <p> 在指定缓存中查询多个缓存键
@@ -44,7 +44,7 @@ public interface Cache {
 	 * @param keys
 	 * @return
 	 */
-	public List<Object> get(String name, String[] keys) throws CacheOperateException;
+	public <T> List<T> get(String name, String[] keys, Class<T> clazz) throws CacheOperateException;
 	
 	/**
 	 * <p> 从指定缓存中删除多个缓存键值

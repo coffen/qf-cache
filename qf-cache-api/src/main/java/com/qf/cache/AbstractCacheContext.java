@@ -13,6 +13,7 @@ import com.qf.cache.operation.CacheEvictOperation;
 import com.qf.cache.operation.CacheGetOperation;
 import com.qf.cache.operation.CacheSaveOperation;
 import com.qf.cache.operation.CacheStatOperation;
+import com.qf.cache.util.ClassUtils;
 
 /**
  * 
@@ -34,26 +35,29 @@ import com.qf.cache.operation.CacheStatOperation;
  */
 public abstract class AbstractCacheContext implements CacheContext {
 	
-	private Map<CacheUnit, Cache> cacheMap = new HashMap<CacheUnit, Cache>();
+	private Map<CacheUnit, Cache> cacheMap = new HashMap<CacheUnit, Cache>();	
+	private Map<Class<?>, Class<?>> clazzMapping = new HashMap<Class<?>, Class<?>>();
 
 	@Override
-	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {
+	public <T> void save(CacheSaveOperation<T> operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
 		cache.put(operation.getNamespace(), operation.getKeyValue(), operation.getExpire(), operation.getCondition());
 	}
 
 	@Override
-	public Map<String, Object> get(CacheGetOperation operation) throws CacheNotExistsException, CacheOperateException {
+	@SuppressWarnings("unchecked")
+	public <T> Map<String, T> get(CacheGetOperation<T> operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
 		String namespace = operation.getNamespace();
 		String[] keys = operation.getKeys();
-		List<Object> objList = cache.get(namespace, keys);
+		Class<T> clazz = (Class<T>)getGenricType(operation.getClass());
+		List<T> objList = cache.get(namespace, keys, clazz);
 		if (objList == null || objList.size() != keys.length) {
 			throw new CacheOperateException(namespace, "Cache batch get result error: operation is null or not conform the input keys length.");
 		}
-		Map<String, Object> result = new HashMap<String, Object>();
+		Map<String, T> result = new HashMap<String, T>();
 		for (int i = 0; i < objList.size(); i++) {
-			Object obj = objList.get(i);
+			T obj = objList.get(i);
 			result.put(keys[i], obj);
 		}
 		return result;
@@ -86,6 +90,15 @@ public abstract class AbstractCacheContext implements CacheContext {
 			throw new CacheNotExistsException("Cache not found: " + operation.getNamespace());
 		}
 		return cache;
+	}
+	
+	private Class<?> getGenricType(Class<?> clazz) {
+		Class<?> genricType = clazzMapping.get(clazz);
+		if (genricType == null) {
+			genricType = ClassUtils.getSuperClassGenricType(clazz, 0);
+			clazzMapping.put(clazz, genricType);
+		}
+		return genricType;
 	}
 
 }

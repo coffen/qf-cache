@@ -38,15 +38,15 @@ public abstract class AbstractHierarchyCache implements HierarchyCache {
 	}
 
 	@Override
-	public int put(String name, Map<String, Object> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException {
+	public <T> int put(String name, Map<String, T> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException {
 		local.put(name, keyValue, expire, condition);
 		int count = sharded.put(name, keyValue, expire, condition);
 		return count;
 	}
 
 	@Override
-	public List<Object> get(String name, String[] keys) throws CacheOperateException {
-		List<Object> values = local.get(name, keys);
+	public <T> List<T> get(String name, String[] keys, Class<T> clazz) throws CacheOperateException {
+		List<T> values = local.get(name, keys, clazz);
 		List<String> remained = new ArrayList<String>();
 		List<Integer> indexs = new ArrayList<Integer>();
 		if (CollectionUtils.isEmpty(values)) {
@@ -61,7 +61,7 @@ public abstract class AbstractHierarchyCache implements HierarchyCache {
 			}
 		}
 		if (remained.size() > 0) {
-			List<Object> shardedValue = sharded.get(name, remained.toArray(new String[0]));
+			List<T> shardedValue = sharded.get(name, remained.toArray(new String[0]), clazz);
 			for (int i = 0; i < remained.size(); i++) {
 				values.set(indexs.get(i), shardedValue.get(i));
 			}

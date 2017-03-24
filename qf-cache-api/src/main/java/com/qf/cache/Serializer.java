@@ -29,7 +29,7 @@ public interface Serializer {
 	 * @return
 	 * @throws IOException
 	 */
-	public byte[] serialize(Object object) throws IOException;
+	public <T> byte[] serialize(T object) throws IOException;
 
 	/**
 	 * 反序列化对象
@@ -38,6 +38,6 @@ public interface Serializer {
 	 * @return
 	 * @throws IOException
 	 */
-	public Object deSerialize(byte[] bytes) throws IOException;
+	public <T> T deSerialize(byte[] bytes, Class<T> clazz) throws IOException;
 	
 }

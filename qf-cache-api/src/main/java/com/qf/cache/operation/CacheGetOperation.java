@@ -22,7 +22,7 @@ import com.qf.cache.CacheOperation;
  * @version: v1.0
  *
  */
-public class CacheGetOperation implements CacheOperation, Serializable {
+public class CacheGetOperation<T> implements CacheOperation, Serializable {
 	
 	private static final long serialVersionUID = 5759751398791513507L;
 	

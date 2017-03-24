@@ -24,12 +24,12 @@ import com.qf.cache.CacheSaveConditionEnum;
  * @version: v1.0
  *
  */
-public class CacheSaveOperation implements CacheOperation, Serializable {
+public class CacheSaveOperation<T> implements CacheOperation, Serializable {
 	
 	private static final long serialVersionUID = -2157371986540008460L;
 	
 	private String namespace;	
-	private Map<String, Object> keyValue; 
+	private Map<String, T> keyValue; 
 	private Long expire;
 	private CacheSaveConditionEnum condition;
 	
@@ -41,11 +41,11 @@ public class CacheSaveOperation implements CacheOperation, Serializable {
 		this.namespace = namespace;
 	}
 
-	public Map<String, Object> getKeyValue() {
+	public Map<String, T> getKeyValue() {
 		return keyValue;
 	}
 
-	public void setKeyValue(Map<String, Object> keyValue) {
+	public void setKeyValue(Map<String, T> keyValue) {
 		this.keyValue = keyValue;
 	}
 
