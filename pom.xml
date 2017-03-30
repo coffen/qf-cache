@@ -11,7 +11,7 @@
 	<modules>
 		<module>qf-cache-api</module>
 		<module>qf-cache-local</module>
-		<module>qf-cache-shared</module>
+		<module>qf-cache-sharded</module>
 		<module>qf-cache-service</module>
 		<module>qf-cache-spring</module>
 		<module>qf-cache-util</module>

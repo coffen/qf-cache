@@ -8,7 +8,7 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>qf-cache-shared</artifactId>
+	<artifactId>qf-cache-sharded</artifactId>
 	<packaging>jar</packaging>
 	<name>Qianfan Shared Cache</name>
 
