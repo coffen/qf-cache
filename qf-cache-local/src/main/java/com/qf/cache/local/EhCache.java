@@ -47,7 +47,7 @@ import com.qf.cache.serializer.KryoSerializer;
  */
 public class EhCache implements Cache {
 	
-	private Logger log = LoggerFactory.getLogger(EhCache.class);
+	private static Logger log = LoggerFactory.getLogger(EhCache.class);
 	
 	private static long DEFAULT_POOL_SIZE = 1000;
 	
@@ -81,7 +81,17 @@ public class EhCache implements Cache {
 			builder.withExpiry(Expirations.timeToIdleExpiration(new Duration(expireTime, TimeUnit.MINUTES)));
 		}
 		CacheConfiguration<String, byte[]> config = builder.build();
-		cacheManager.createCache(namespace, config);
+		try {
+			cacheManager.createCache(namespace, config);
+		}
+		catch (IllegalArgumentException e) {
+			log.error("Ehcache create exception: cache with namespace[" + namespace + "] already exists." , e);
+			throw new CacheCreateException("Ehcache create exception: cache with namespace[" + namespace + "] already exists.");
+		}
+		catch (IllegalStateException e) {
+			log.error("Ehcache create exception: create failed." , e);
+			throw new CacheCreateException("Ehcache create exception: create failed.");
+		}
 
 		EhCache cache = new EhCache();
 		cache.namespace = namespace;
@@ -97,6 +107,7 @@ public class EhCache implements Cache {
 		}
 		org.ehcache.Cache<String, byte[]> cache = cacheManager.getCache(name, String.class, byte[].class);
 		if (cache == null) {
+			log.error("EhCache put错误, 指定cache不存在: name={}", name);
 			throw new CacheOperateException(name, "Ehcache not existed.");
 		}
 		int cacheCount = 0;
@@ -123,6 +134,7 @@ public class EhCache implements Cache {
 		}
 		org.ehcache.Cache<String, byte[]> cache = cacheManager.getCache(name, String.class, byte[].class);
 		if (cache == null) {
+			log.error("EhCache get错误, 指定cache不存在: name={}", name);
 			throw new CacheOperateException(name, "Ehcache not existed.");
 		}
 		for (String key : keys) {
