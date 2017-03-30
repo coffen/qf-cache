@@ -41,7 +41,7 @@ public class EhCacheTest {
 	@Before
 	public void before() throws CacheCreateException {
 		namespace = "com.qf.cache.eh";
-		cache = EhCache.instance(namespace, 500, 3);
+		cache = EhCache.instance(namespace, 60 * 24);
 	}
 	
 	@Test

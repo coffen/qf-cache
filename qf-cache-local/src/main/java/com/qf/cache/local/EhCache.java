@@ -64,19 +64,28 @@ public class EhCache implements Cache {
 	private EhCache() {}
 	
 	public static EhCache instance(String namespace) throws CacheCreateException {
-		return instance(namespace, DEFAULT_POOL_SIZE, 0, null);
+		return instance(namespace, 0, null);
 	}
 	
-	public static EhCache instance(String namespace, long heapSize, long expireTime) throws CacheCreateException {
-		return instance(namespace, heapSize, expireTime, null);
+	public static EhCache instance(String namespace, long expireTime) throws CacheCreateException {
+		return instance(namespace, expireTime, null);
 	}
 	
-	public static EhCache instance(String namespace, long heapSize, long expireTime, Serializer serializer) throws CacheCreateException {
-		if (StringUtils.isBlank(namespace) || heapSize < 10 || expireTime < 0) {
+	/**
+	 * 创建缓存实例
+	 * 
+	 * @param namespace		缓存名称
+	 * @param expireTime	过期时间, 单位: 分钟
+	 * @param serializer	序列化器
+	 * @return
+	 * @throws CacheCreateException
+	 */
+	public static EhCache instance(String namespace, long expireTime, Serializer serializer) throws CacheCreateException {
+		if (StringUtils.isBlank(namespace) || expireTime < 0) {
 			throw new CacheCreateException("Ehcache create exception: create parameter is invalid.");
 		}
 		
-		CacheConfigurationBuilder<String, byte[]> builder = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, byte[].class, ResourcePoolsBuilder.heap(heapSize));
+		CacheConfigurationBuilder<String, byte[]> builder = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, byte[].class, ResourcePoolsBuilder.heap(DEFAULT_POOL_SIZE));
 		if (expireTime > 0) {
 			builder.withExpiry(Expirations.timeToIdleExpiration(new Duration(expireTime, TimeUnit.MINUTES)));
 		}
