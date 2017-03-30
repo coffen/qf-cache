@@ -56,16 +56,59 @@ public class EhCacheTest {
 	
 	@Test
 	public void testEhCache() throws CacheOperateException, InterruptedException {
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("name", 7);
-		map.put("height", 171);
-		map.put("weight", 200);
+		Map<String, Person> map = new HashMap<String, Person>();
+		map.put("zx", new Person("Zhang Xiang", 171, 145));
+		map.put("lkf", new Person("Li Ke Fu", 171, 168));
+		map.put("jzq", new Person("Jiang Zhi Qiang", 168, 140));
 		cache.put("com.qf.cache.eh", map, 2000L, null);
 		Thread.sleep(1900);
-		List<Integer> list = cache.get(namespace, new String[] { "name", "height", "weight" }, Integer.class);	
-		for (Integer intObject : list) {
-			log.error(intObject + ":");
+		List<Person> list = cache.get(namespace, new String[] { "zx", "lkf", "jzq" }, Person.class);	
+		for (Person p : list) {
+			log.error(p.getName() + ": " + p);
 		}
+	}
+	
+	class Person {
+		
+		public Person(String name, float height, float weight) {
+			this.name = name;
+			this.height = height;
+			this.weight = weight;
+		}
+		
+		String name;
+		float height;
+		float weight;
+		
+		public String getName() {
+			return name;
+		}
+		
+		public void setName(String name) {
+			this.name = name;
+		}
+		
+		public float getHeight() {
+			return height;
+		}
+		
+		public void setHeight(float height) {
+			this.height = height;
+		}
+		
+		public float getWeight() {
+			return weight;
+		}
+		
+		public void setWeight(float weight) {
+			this.weight = weight;
+		}
+		
+		@Override
+		public String toString() {
+			return "name: " + name + " height: " + height + " weight: " + weight;
+		}
+		
 	}
 
 }
