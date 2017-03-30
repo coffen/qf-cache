@@ -4,11 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.ehcache.CacheManager;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.CacheManagerBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -46,12 +41,7 @@ public class EhCacheTest {
 	@Before
 	public void before() throws CacheCreateException {
 		namespace = "com.qf.cache.eh";
-		
-		CacheManager manager = CacheManagerBuilder.newCacheManagerBuilder().build();
-		manager.init();
-		CacheConfiguration<String, byte[]> config = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, byte[].class, ResourcePoolsBuilder.heap(1000)).build();
-		manager.createCache(namespace, config);
-		cache = new EhCache(manager);
+		cache = EhCache.instance(namespace, 500, 3);
 	}
 	
 	@Test

@@ -6,9 +6,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ehcache.CacheManager;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,19 +49,44 @@ public class EhCache implements Cache {
 	
 	private Logger log = LoggerFactory.getLogger(EhCache.class);
 	
-	private CacheManager cacheManager = null;
+	private static long DEFAULT_POOL_SIZE = 1000;
+	
+	private static CacheManager cacheManager = null;
 	private Serializer serializer = null;
 	
-	public EhCache(CacheManager mgr) throws CacheCreateException {
-		this(mgr, null);
+	private String namespace;
+	
+	static {
+		cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build();
+		cacheManager.init();
 	}
 	
-	public EhCache(CacheManager mgr, Serializer serializer) throws CacheCreateException {
-		if (mgr == null) {
-			throw new CacheCreateException("Ehcache create exception: cacheManager parameter is null.");
+	private EhCache() {}
+	
+	public static EhCache instance(String namespace) throws CacheCreateException {
+		return instance(namespace, DEFAULT_POOL_SIZE, 0, null);
+	}
+	
+	public static EhCache instance(String namespace, long heapSize, long expireTime) throws CacheCreateException {
+		return instance(namespace, heapSize, expireTime, null);
+	}
+	
+	public static EhCache instance(String namespace, long heapSize, long expireTime, Serializer serializer) throws CacheCreateException {
+		if (StringUtils.isBlank(namespace) || heapSize < 10 || expireTime < 0) {
+			throw new CacheCreateException("Ehcache create exception: create parameter is invalid.");
 		}
-		this.cacheManager = mgr;
-		this.serializer = serializer == null ? new KryoSerializer() : serializer;
+		
+		CacheConfigurationBuilder<String, byte[]> builder = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, byte[].class, ResourcePoolsBuilder.heap(heapSize));
+		if (expireTime > 0) {
+			builder.withExpiry(Expirations.timeToIdleExpiration(new Duration(expireTime, TimeUnit.MINUTES)));
+		}
+		CacheConfiguration<String, byte[]> config = builder.build();
+		cacheManager.createCache(namespace, config);
+
+		EhCache cache = new EhCache();
+		cache.namespace = namespace;
+		cache.serializer = serializer == null ? new KryoSerializer() : serializer;
+		return cache;
 	}
 
 	@Override
@@ -151,6 +183,10 @@ public class EhCache implements Cache {
 			throw new CacheOperateException(name, "EhCache stat参数错误: name=" + name);
 		}
 		return new CacheInfo();
+	}
+	
+	public String getNamespace() {
+		return namespace;
 	}
 
 }
