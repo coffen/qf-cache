@@ -41,7 +41,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 	@Override
 	public <T> void save(CacheSaveOperation<T> operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
-		cache.put(operation.getNamespace(), operation.getKeyValue(), operation.getExpire(), operation.getCondition());
+		cache.put(operation.getKeyValue(), operation.getExpire(), operation.getCondition());
 	}
 
 	@Override
@@ -51,7 +51,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 		String namespace = operation.getNamespace();
 		String[] keys = operation.getKeys();
 		Class<T> clazz = (Class<T>)getGenricType(operation.getClass());
-		List<T> objList = cache.get(namespace, keys, clazz);
+		List<T> objList = cache.get(keys, clazz);
 		if (objList == null || objList.size() != keys.length) {
 			throw new CacheOperateException(namespace, "Cache batch get result error: operation is null or not conform the input keys length.");
 		}
@@ -66,19 +66,19 @@ public abstract class AbstractCacheContext implements CacheContext {
 	@Override
 	public void evict(CacheEvictOperation operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
-		cache.evict(operation.getNamespace(), operation.getKeys());
+		cache.evict(operation.getKeys());
 	}
 
 	@Override
 	public void clear(CacheClearOperation operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
-		cache.clear(operation.getNamespace());
+		cache.clear();
 	}
 
 	@Override
 	public CacheInfo stat(CacheStatOperation operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
-		return cache.stat(operation.getNamespace());
+		return cache.stat();
 	}
 	
 	private Cache getCache(CacheOperation operation) throws CacheNotExistsException {

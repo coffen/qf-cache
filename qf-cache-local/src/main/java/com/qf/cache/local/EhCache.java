@@ -19,6 +19,7 @@ import org.ehcache.expiry.Expirations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSON;
 import com.qf.cache.Cache;
 import com.qf.cache.CacheInfo;
 import com.qf.cache.CacheSaveConditionEnum;
@@ -109,15 +110,15 @@ public class EhCache implements Cache {
 	}
 
 	@Override
-	public <T> int put(String name, Map<String, T> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException {
-		if (StringUtils.isBlank(name) || keyValue == null || keyValue.size() == 0) {
-			log.error("EhCache put参数错误: name={}, keyValue={}", name, keyValue);
-			throw new CacheOperateException(name, "EhCache put参数错误: name=" + name + ",keyValue=" + keyValue);
+	public <T> int put(Map<String, T> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException {
+		if (keyValue == null || keyValue.size() == 0) {
+			log.error("EhCache put参数错误: keyValue={}", JSON.toJSONString(keyValue));
+			throw new CacheOperateException(namespace, "EhCache put参数错误: keyValue=" + JSON.toJSONString(keyValue));
 		}
-		org.ehcache.Cache<String, byte[]> cache = cacheManager.getCache(name, String.class, byte[].class);
+		org.ehcache.Cache<String, byte[]> cache = cacheManager.getCache(namespace, String.class, byte[].class);
 		if (cache == null) {
-			log.error("EhCache put错误, 指定cache不存在: name={}", name);
-			throw new CacheOperateException(name, "Ehcache not existed.");
+			log.error("EhCache put错误, 指定cache不存在: name={}", namespace);
+			throw new CacheOperateException(namespace, "Ehcache not existed.");
 		}
 		int cacheCount = 0;
 		for (Entry<String, T> entry : keyValue.entrySet()) {
@@ -135,16 +136,16 @@ public class EhCache implements Cache {
 	}
 
 	@Override
-	public <T> List<T> get(String name, String[] keys, Class<T> clazz) throws CacheOperateException {
+	public <T> List<T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
 		List<T> list = new ArrayList<T>();
-		if (StringUtils.isBlank(name) || keys == null || keys.length == 0) {
-			log.error("EhCache get参数错误: name={}, keys={}", name, keys);
-			throw new CacheOperateException(name, "EhCache get参数错误: name=" + name + ",keys=" + keys);
+		if (keys == null || keys.length == 0 || clazz == null) {
+			log.error("EhCache get参数错误: keys={}, clazz={}", StringUtils.join(keys), clazz);
+			throw new CacheOperateException(namespace, "EhCache get参数错误: keys=" + keys + ",clazz=" + clazz);
 		}
-		org.ehcache.Cache<String, byte[]> cache = cacheManager.getCache(name, String.class, byte[].class);
+		org.ehcache.Cache<String, byte[]> cache = cacheManager.getCache(namespace, String.class, byte[].class);
 		if (cache == null) {
-			log.error("EhCache get错误, 指定cache不存在: name={}", name);
-			throw new CacheOperateException(name, "Ehcache not existed.");
+			log.error("EhCache get参数错误, 指定cache不存在: name={}", namespace);
+			throw new CacheOperateException(namespace, "Ehcache not existed.");
 		}
 		for (String key : keys) {
 			T value = null;
@@ -165,12 +166,16 @@ public class EhCache implements Cache {
 	}
 
 	@Override
-	public int evict(String name, String[] keys) throws CacheOperateException {
-		if (StringUtils.isBlank(name) || keys == null || keys.length == 0) {
-			log.error("EhCache evict参数错误: name={}, keys={}", name, keys);
-			throw new CacheOperateException(name, "EhCache evict参数错误: name=" + name + ",keys=" + keys);
+	public int evict(String[] keys) throws CacheOperateException {
+		if (keys == null || keys.length == 0) {
+			log.error("EhCache evict参数错误: keys={}", StringUtils.join(keys));
+			throw new CacheOperateException(namespace, "EhCache evict参数错误: keys=" + keys);
 		}
-		org.ehcache.Cache<String, Object> cache = cacheManager.getCache(name, String.class, Object.class);
+		org.ehcache.Cache<String, Object> cache = cacheManager.getCache(namespace, String.class, Object.class);
+		if (cache == null) {
+			log.error("EhCache evict参数错误, 指定cache不存在: name={}", namespace);
+			throw new CacheOperateException(namespace, "Ehcache not existed.");
+		}
 		int cacheCount = 0;
 		for (String key : keys) {
 			if (StringUtils.isNotBlank(key)) {
@@ -182,12 +187,12 @@ public class EhCache implements Cache {
 	}
 
 	@Override
-	public int clear(String name) throws CacheOperateException {
-		if (StringUtils.isBlank(name)) {
-			log.error("EhCache clear参数错误: name={}", name);
-			throw new CacheOperateException(name, "EhCache clear参数错误: name=" + name);
+	public int clear() throws CacheOperateException {
+		org.ehcache.Cache<String, Object> cache = cacheManager.getCache(namespace, String.class, Object.class);
+		if (cache == null) {
+			log.error("EhCache clear参数错误, 指定cache不存在: name={}", namespace);
+			throw new CacheOperateException(namespace, "Ehcache not existed.");
 		}
-		org.ehcache.Cache<String, Object> cache = cacheManager.getCache(name, String.class, Object.class);
 		Iterator<org.ehcache.Cache.Entry<String, Object>> it = cache.iterator();
 		int clearCount = 0;
 		while (it.hasNext()) {
@@ -198,11 +203,7 @@ public class EhCache implements Cache {
 	}
 
 	@Override
-	public CacheInfo stat(String name) throws CacheOperateException {
-		if (StringUtils.isBlank(name)) {
-			log.error("EhCache stat参数错误: name={}", name);
-			throw new CacheOperateException(name, "EhCache stat参数错误: name=" + name);
-		}
+	public CacheInfo stat() throws CacheOperateException {
 		return new CacheInfo();
 	}
 	

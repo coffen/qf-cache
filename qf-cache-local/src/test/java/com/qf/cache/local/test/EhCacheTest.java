@@ -36,11 +36,10 @@ public class EhCacheTest {
 	private Logger log = LoggerFactory.getLogger(EhCacheTest.class);
 	
 	EhCache cache;
-	String namespace;
+	String namespace = "com.qf.cache.eh";
 	
 	@Before
 	public void before() throws CacheCreateException {
-		namespace = "com.qf.cache.eh";
 		cache = EhCache.instance(namespace, 60 * 24);
 	}
 	
@@ -50,9 +49,9 @@ public class EhCacheTest {
 		map.put("zx", new Person("Zhang Xiang", 171, 145));
 		map.put("lkf", new Person("Li Ke Fu", 171, 168));
 		map.put("jzq", new Person("Jiang Zhi Qiang", 168, 140));
-		cache.put("com.qf.cache.eh", map, 2000L, null);
+		cache.put(map, 2000L, null);
 		Thread.sleep(1900);
-		List<Person> list = cache.get(namespace, new String[] { "zx", "lkf", "jzq" }, Person.class);	
+		List<Person> list = cache.get(new String[] { "zx", "lkf", "jzq" }, Person.class);	
 		for (Person p : list) {
 			log.error(p.getName() + ": " + p);
 		}

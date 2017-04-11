@@ -38,15 +38,15 @@ public abstract class AbstractHierarchyCache implements HierarchyCache {
 	}
 
 	@Override
-	public <T> int put(String name, Map<String, T> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException {
-		local.put(name, keyValue, expire, condition);
-		int count = sharded.put(name, keyValue, expire, condition);
+	public <T> int put(Map<String, T> keyValue, Long expire, CacheSaveConditionEnum condition) throws CacheOperateException {
+		local.put(keyValue, expire, condition);
+		int count = sharded.put(keyValue, expire, condition);
 		return count;
 	}
 
 	@Override
-	public <T> List<T> get(String name, String[] keys, Class<T> clazz) throws CacheOperateException {
-		List<T> values = local.get(name, keys, clazz);
+	public <T> List<T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
+		List<T> values = local.get(keys, clazz);
 		List<String> remained = new ArrayList<String>();
 		List<Integer> indexs = new ArrayList<Integer>();
 		if (CollectionUtils.isEmpty(values)) {
@@ -61,7 +61,7 @@ public abstract class AbstractHierarchyCache implements HierarchyCache {
 			}
 		}
 		if (remained.size() > 0) {
-			List<T> shardedValue = sharded.get(name, remained.toArray(new String[0]), clazz);
+			List<T> shardedValue = sharded.get(remained.toArray(new String[0]), clazz);
 			for (int i = 0; i < remained.size(); i++) {
 				values.set(indexs.get(i), shardedValue.get(i));
 			}
@@ -70,22 +70,22 @@ public abstract class AbstractHierarchyCache implements HierarchyCache {
 	}
 
 	@Override
-	public int evict(String name, String[] keys) throws CacheOperateException {
-		local.evict(name, keys);
-		sharded.evict(name, keys);
+	public int evict(String[] keys) throws CacheOperateException {
+		local.evict(keys);
+		sharded.evict(keys);
 		return keys.length;
 	}
 
 	@Override
-	public int clear(String name) throws CacheOperateException {
-		local.clear(name);
-		sharded.clear(name);
+	public int clear() throws CacheOperateException {
+		local.clear();
+		sharded.clear();
 		return 1;
 	}
 
 	@Override
-	public CacheInfo stat(String name) throws CacheOperateException {
-		return sharded.stat(name);
+	public CacheInfo stat() throws CacheOperateException {
+		return sharded.stat();
 	}
 
 	@Override
