@@ -127,7 +127,7 @@ public class EhCache implements Cache {
 					cache.put(entry.getKey(), serializer.serialize(entry.getValue()));
 				}
 				catch (IOException e) {
-					log.error("序列化失败: " + entry.getKey(), e);
+					log.error("序列化失败: " + namespace + "." + entry.getKey(), e);
 				}
 				cacheCount++;
 			}
@@ -156,7 +156,7 @@ public class EhCache implements Cache {
 						value = serializer.deSerialize(bytes, clazz);
 					}
 					catch (IOException e) {
-						log.error("序列化失败: " + key, e);
+						log.error("反序列化失败: " + key, e);
 					}
 				}
 			}
