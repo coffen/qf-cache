@@ -11,8 +11,7 @@ public class ClusteredRedisSeqGenerator {
 	}
 	
 	public long generate() {
-		return 0;
-		
+		return 0;		
 	}
 
 }
