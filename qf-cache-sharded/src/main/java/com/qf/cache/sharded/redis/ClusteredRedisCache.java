@@ -127,14 +127,20 @@ public class ClusteredRedisCache implements Cache {
 				serialedKeyList.add(key.getBytes());
 			}
 		}
-		List<byte[]> valueList = jedisCluster.hmget(namespace.getBytes(), (byte[][])serialedKeyList.toArray());
-		if (CollectionUtils.isNotEmpty(valueList)) {
-			for (int i = 0; i < valueList.size(); i++) {
-				try {
-					list.add(serializer.deSerialize(valueList.get(i), clazz));
-				}
-				catch (IOException e) {
-					log.error("反序列化失败: " + keys[i], e);
+		if (serialedKeyList.size() > 0) {
+			byte[][] serialedKeyArr = new byte[serialedKeyList.size()][];
+			for (int i = 0; i < serialedKeyList.size(); i++) {
+				serialedKeyArr[i] = serialedKeyList.get(i);
+			}
+			List<byte[]> valueList = jedisCluster.hmget(namespace.getBytes(), serialedKeyArr);
+			if (CollectionUtils.isNotEmpty(valueList)) {
+				for (int i = 0; i < valueList.size(); i++) {
+					try {
+						list.add(serializer.deSerialize(valueList.get(i), clazz));
+					}
+					catch (IOException e) {
+						log.error("反序列化失败: " + keys[i], e);
+					}
 				}
 			}
 		}
@@ -144,6 +150,7 @@ public class ClusteredRedisCache implements Cache {
 	@Override
 	public int evict(String[] keys) throws CacheOperateException {
 		String namespace = config.getNamespace();
+		long delCount = 0;
 		if (keys == null || keys.length == 0) {
 			log.error("ClusteredRedisCache evict参数错误: keys={}", StringUtils.join(keys));
 			throw new CacheOperateException(namespace, "ClusteredRedisCache evict参数错误: keys=" + keys);
@@ -154,7 +161,13 @@ public class ClusteredRedisCache implements Cache {
 				serialedKeyList.add(key.getBytes());
 			}
 		}
-		long delCount = jedisCluster.hdel(namespace.getBytes(), (byte[][])serialedKeyList.toArray());
+		if (serialedKeyList.size() > 0) {
+			byte[][] serialedKeyArr = new byte[serialedKeyList.size()][];
+			for (int i = 0; i < serialedKeyList.size(); i++) {
+				serialedKeyArr[i] = serialedKeyList.get(i);
+			}
+			delCount = jedisCluster.hdel(namespace.getBytes(), serialedKeyArr);
+		}
 		return (int)delCount;
 	}
 
