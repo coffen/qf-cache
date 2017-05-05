@@ -1,11 +1,11 @@
 package com.qf.cache.sharded.test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -13,34 +13,34 @@ import org.slf4j.LoggerFactory;
 
 import com.qf.cache.exception.CacheCreateException;
 import com.qf.cache.exception.CacheOperateException;
-import com.qf.cache.sharded.redis.ClusteredRedisCache;
+import com.qf.cache.sharded.redis.ShardedRedisCache;
 
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.JedisShardInfo;
+import redis.clients.jedis.ShardedJedisPool;
 
-public class ClusteredRedisCacheTest {
+public class ShardedRedisCacheTest {
 	
-	private Logger log = LoggerFactory.getLogger(ClusteredRedisCacheTest.class);
+	private Logger log = LoggerFactory.getLogger(ShardedRedisCacheTest.class);
 	
-	ClusteredRedisCache cache;
+	ShardedRedisCache cache;
 	String namespace = "com.qf.cache.redis";
 	
 	@Before
 	public void before() throws CacheCreateException {
-		Set<HostAndPort> nodeSet = new HashSet<HostAndPort>();
-		nodeSet.add(new HostAndPort("192.168.48.128", 9001));
-		nodeSet.add(new HostAndPort("192.168.48.128", 9002));
-		nodeSet.add(new HostAndPort("192.168.48.128", 9003));
-		nodeSet.add(new HostAndPort("192.168.48.128", 9004));
-		nodeSet.add(new HostAndPort("192.168.48.128", 9005));
-		nodeSet.add(new HostAndPort("192.168.48.128", 9006));
-		JedisCluster cluster = new JedisCluster(nodeSet);
-		cache = ClusteredRedisCache.instance(namespace);
-		cache.setJedisCluster(cluster);
+		List<JedisShardInfo> shardInfoList = new ArrayList<JedisShardInfo>();
+		shardInfoList.add(new JedisShardInfo("192.168.48.128", 9001));
+		shardInfoList.add(new JedisShardInfo("192.168.48.128", 9002));
+		shardInfoList.add(new JedisShardInfo("192.168.48.128", 9003));
+		shardInfoList.add(new JedisShardInfo("192.168.48.128", 9004));
+		shardInfoList.add(new JedisShardInfo("192.168.48.128", 9005));
+		shardInfoList.add(new JedisShardInfo("192.168.48.128", 9006));
+		ShardedJedisPool pool = new ShardedJedisPool(new GenericObjectPoolConfig(), shardInfoList);
+		cache = ShardedRedisCache.instance(namespace, 0);
+		cache.setShardedJedisPool(pool);
 	}
 	
 	@Test
-	public void testClusteredRedisCache() throws CacheOperateException, InterruptedException {
+	public void testShardedRedisCache() throws CacheOperateException, InterruptedException {
 		Map<String, Person> map = new HashMap<String, Person>();
 		map.put("zx", new Person("Zhang Xiang", 171, 145));
 		map.put("lkf", new Person("Li Ke Fu", 171, 168));

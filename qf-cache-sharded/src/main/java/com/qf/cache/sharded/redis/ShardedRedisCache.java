@@ -133,15 +133,21 @@ public class ShardedRedisCache implements Cache {
 				serialedKeyList.add(key.getBytes());
 			}
 		}
-		try (ShardedJedis shardedJedis = getShardedJedis(config.getDb())) {
-			List<byte[]> valueList = shardedJedis.hmget(namespace.getBytes(), (byte[][])serialedKeyList.toArray());
-			if (CollectionUtils.isNotEmpty(valueList)) {
-				for (int i = 0; i < valueList.size(); i++) {
-					try {
-						list.add(serializer.deSerialize(valueList.get(i), clazz));
-					}
-					catch (IOException e) {
-						log.error("反序列化失败: " + keys[i], e);
+		if (serialedKeyList.size() > 0) {
+			byte[][] serialedKeyArr = new byte[serialedKeyList.size()][];
+			for (int i = 0; i < serialedKeyList.size(); i++) {
+				serialedKeyArr[i] = serialedKeyList.get(i);
+			}
+			try (ShardedJedis shardedJedis = getShardedJedis(config.getDb())) {
+				List<byte[]> valueList = shardedJedis.hmget(namespace.getBytes(), serialedKeyArr);
+				if (CollectionUtils.isNotEmpty(valueList)) {
+					for (int i = 0; i < valueList.size(); i++) {
+						try {
+							list.add(serializer.deSerialize(valueList.get(i), clazz));
+						}
+						catch (IOException e) {
+							log.error("反序列化失败: " + keys[i], e);
+						}
 					}
 				}
 			}
@@ -152,6 +158,7 @@ public class ShardedRedisCache implements Cache {
 	@Override
 	public int evict(String[] keys) throws CacheOperateException {
 		String namespace = config.getNamespace();
+		long delCount = 0L;
 		if (keys == null || keys.length == 0) {
 			log.error("ShardedRedisCache evict参数错误: keys={}", StringUtils.join(keys));
 			throw new CacheOperateException(namespace, "ShardedRedisCache evict参数错误: keys=" + keys);
@@ -162,9 +169,14 @@ public class ShardedRedisCache implements Cache {
 				serialedKeyList.add(key.getBytes());
 			}
 		}
-		long delCount = 0L;
-		try (ShardedJedis shardedJedis = getShardedJedis(config.getDb())) {
-			delCount = shardedJedis.hdel(namespace.getBytes(), (byte[][])serialedKeyList.toArray());
+		if (serialedKeyList.size() > 0) {
+			byte[][] serialedKeyArr = new byte[serialedKeyList.size()][];
+			for (int i = 0; i < serialedKeyList.size(); i++) {
+				serialedKeyArr[i] = serialedKeyList.get(i);
+			}
+			try (ShardedJedis shardedJedis = getShardedJedis(config.getDb())) {
+				delCount = shardedJedis.hdel(namespace.getBytes(), serialedKeyArr);
+			}
 		}
 		return (int)delCount;
 	}
@@ -199,6 +211,14 @@ public class ShardedRedisCache implements Cache {
 			}
 		}
 		return shardedJedis;
+	}
+	
+	public ShardedJedisPool getShardedJedisPool() {
+		return shardedJedisPool;
+	}
+	
+	public void setShardedJedisPool(ShardedJedisPool shardedJedisPool) {
+		ShardedRedisCache.shardedJedisPool = shardedJedisPool;
 	}
 
 }
