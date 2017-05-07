@@ -3,14 +3,13 @@ package com.qf.cache.sharded.redis;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson.JSON;
 
 import redis.clients.jedis.JedisCluster;
 
@@ -41,6 +40,7 @@ public class RedisSeqGenerator {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	public long generate(String group) {
 		if (StringUtils.isBlank(group)) {
 			log.error("生成序列号失败, 参数为空");
@@ -52,9 +52,9 @@ public class RedisSeqGenerator {
 			log.error("生成序列号失败, 分组尚未添加: {}", group);
 			return -1;
 		}
-		Object result = this.jedisCluster.evalsha(shal, 1, groupKey);
-		log.error(JSON.toJSONString(result));
-		return 0;
+		ArrayList<Long> result = (ArrayList<Long>)this.jedisCluster.evalsha(shal, 1, groupKey);
+		Long miliSecond = (result.get(0) * 1000 + result.get(1) / 1000);
+		return (miliSecond << (12 + 10)) + (result.get(2) << 10) + result.get(3);
 	}
 	
 	private String loadScript() throws Exception {

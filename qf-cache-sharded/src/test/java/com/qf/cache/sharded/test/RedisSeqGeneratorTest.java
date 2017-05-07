@@ -34,8 +34,10 @@ public class RedisSeqGeneratorTest {
 	
 	@Test
 	public void testRedisSeqGenerator() {
-		long seq = generator.generate("test");
-		log.error("序列号: {}", seq);
+		for (int i = 0; i < 1000; i++) {
+			long seq = generator.generate("test");
+			log.error("序列号: {}", seq);
+		}
 	}
 	
 }
