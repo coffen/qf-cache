@@ -1,4 +1,4 @@
-package com.qf.cache.serializer;
+package com.qf.cache.serializer.kryo;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

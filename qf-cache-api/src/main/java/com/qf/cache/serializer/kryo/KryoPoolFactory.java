@@ -1,4 +1,4 @@
-package com.qf.cache.serializer;
+package com.qf.cache.serializer.kryo;
 
 import org.objenesis.strategy.StdInstantiatorStrategy;
 

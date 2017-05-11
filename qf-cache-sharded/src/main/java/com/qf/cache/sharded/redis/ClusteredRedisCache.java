@@ -20,7 +20,7 @@ import com.qf.cache.CacheSaveConditionEnum;
 import com.qf.cache.Serializer;
 import com.qf.cache.exception.CacheCreateException;
 import com.qf.cache.exception.CacheOperateException;
-import com.qf.cache.serializer.KryoSerializer;
+import com.qf.cache.serializer.kryo.KryoSerializer;
 
 import redis.clients.jedis.JedisCluster;
 
