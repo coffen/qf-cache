@@ -88,12 +88,12 @@ public class ClusteredMemcache implements Cache {
 			log.error("ClusteredMemcache put参数错误: keyValue={}", JSON.toJSONString(keyValue));
 			throw new CacheOperateException(namespace, "ClusteredMemcache put参数错误: keyValue=" + JSON.toJSONString(keyValue));
 		}
-		Map<String, String> serialedMap = new HashMap<String, String>();
+		Map<String, byte[]> serialedMap = new HashMap<String, byte[]>();
 		for (Entry<String, T> entry : keyValue.entrySet()) {
 			if (StringUtils.isNotBlank(entry.getKey())) {
 				String nameKey = buildKey(namespace, entry.getKey());
 				try {
-					serialedMap.put(nameKey, new String(serializer.serialize(entry.getValue())));
+					serialedMap.put(nameKey, serializer.serialize(entry.getValue()));
 				}
 				catch (IOException e) {
 					log.error("序列化失败: " + namespace + "." + entry.getKey(), e);
@@ -101,7 +101,7 @@ public class ClusteredMemcache implements Cache {
 			}
 		}
 		if (condition == CacheSaveConditionEnum.IF_NOT_EXISTS) {
-			for (Entry<String, String> entry : serialedMap.entrySet()) {
+			for (Entry<String, byte[]> entry : serialedMap.entrySet()) {
 				try {
 					memcachedClient.add(entry.getKey(), exp, entry.getValue());
 				}
@@ -111,7 +111,7 @@ public class ClusteredMemcache implements Cache {
 			}
 		}
 		else if (condition == CacheSaveConditionEnum.IF_EXISTS) {
-			for (Entry<String, String> entry : serialedMap.entrySet()) {
+			for (Entry<String, byte[]> entry : serialedMap.entrySet()) {
 				try {
 					memcachedClient.replace(entry.getKey(), exp, entry.getValue());
 				}
@@ -121,7 +121,7 @@ public class ClusteredMemcache implements Cache {
 			}
 		}
 		else {
-			for (Entry<String, String> entry : serialedMap.entrySet()) {
+			for (Entry<String, byte[]> entry : serialedMap.entrySet()) {
 				try {
 					memcachedClient.set(entry.getKey(), exp, entry.getValue());
 				}
@@ -149,7 +149,7 @@ public class ClusteredMemcache implements Cache {
 			}
 		}
 		if (serialedKeyList.size() > 0) {
-			Map<String, String> map = null;
+			Map<String, byte[]> map = null;
 			try {
 				map = memcachedClient.get(serialedKeyList);
 			}
@@ -158,10 +158,10 @@ public class ClusteredMemcache implements Cache {
 				throw new CacheOperateException(namespace, "MemcachedClient.get异常: keys=" + StringUtils.join(keys));
 			}
 			if (map != null && map.size() > 0) {
-				for (Entry<String, String> entry : map.entrySet()) {
-					if (StringUtils.isNotBlank(entry.getValue())) {
+				for (Entry<String, byte[]> entry : map.entrySet()) {
+					if (entry.getValue() != null) {
 						try {
-							T t = serializer.deSerialize(entry.getValue().getBytes(), clazz);
+							T t = serializer.deSerialize(entry.getValue(), clazz);
 							list.add(t);
 						}
 						catch (IOException e) {
