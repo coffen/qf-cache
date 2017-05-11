@@ -1,5 +1,6 @@
 package com.qf.cache;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,7 +26,9 @@ import com.qf.cache.exception.CacheCreateException;
  * @version: v1.0
  *
  */
-public class CacheUnit {
+public class CacheUnit implements Serializable {
+	
+	private static final long serialVersionUID = 6982793212151189686L;
 	
 	private String namespace;					// 名称空间
 	private Serializer serializer;				// 序列化工具

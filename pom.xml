@@ -31,6 +31,9 @@
 		<fileupload.version>1.3.1</fileupload.version>
 		<qiniu.version>6.1.2</qiniu.version>
 		<log4j.version>1.2.16</log4j.version>
+		<kryo-version>4.0.0</kryo-version>
+		<fastjson-version>1.2.24</fastjson-version>
+		<hessian-version>4.0.38</hessian-version>
 	</properties>
 	<repositories>
 		<repository>
@@ -493,6 +496,22 @@
 				<version>3.10-FINAL</version>
 			</dependency>
 
+			<!-- serializer -->
+			<dependency>
+			    <groupId>com.esotericsoftware</groupId>
+			    <artifactId>kryo</artifactId>
+			    <version>${kryo-version}</version>
+			</dependency>
+			<dependency>
+			    <groupId>com.alibaba</groupId>
+			    <artifactId>fastjson</artifactId>
+			    <version>${fastjson-version}</version>
+			</dependency>
+			<dependency>
+			    <groupId>com.caucho</groupId>
+			    <artifactId>hessian</artifactId>
+			    <version>${hessian-version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<dependencies>
