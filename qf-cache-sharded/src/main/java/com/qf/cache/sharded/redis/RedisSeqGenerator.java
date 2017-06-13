@@ -13,6 +13,24 @@ import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.JedisCluster;
 
+/**
+ * 
+ * <p>
+ * Project Name: C2C商城
+ * <br>
+ * Description: Redis序列号生成器
+ * <br>
+ * File Name: RedisSeqGenerator.java
+ * <br>
+ * Copyright: Copyright (C) 2015 All Rights Reserved.
+ * <br>
+ * Company: 杭州偶尔科技有限公司
+ * <br>
+ * @author 穷奇
+ * @create time：2017年6月13日 下午2:30:41 
+ * @version: v1.0
+ *
+ */
 public class RedisSeqGenerator {
 	
 	private static Logger log = LoggerFactory.getLogger(RedisSeqGenerator.class);
