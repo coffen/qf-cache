@@ -1,7 +1,12 @@
 package com.qf.cache.util;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.qf.cache.anno.CacheField;
 
 /**
  * 
@@ -44,6 +49,31 @@ public class ClassUtils {
 			return Object.class;
 		}
 		return (Class)params[index];
+	}
+	
+	/**
+	 * 获取CacheField注解修饰的Field
+	 * 
+	 * @param clazz
+	 * @return
+	 */
+	public static List<Field> getCacheFields(Class<?> clazz) {
+		List<Field> fieldList = new ArrayList<Field>();
+		if (clazz == null) {
+			return fieldList;
+		}
+		Field[] fields = clazz.getDeclaredFields();
+		for (Field field : fields) {
+			if (!field.isAnnotationPresent(CacheField.class)) {
+				continue;
+			}
+			// 过滤static, transient修饰的字段
+			if ((field.getModifiers() & 8) == 0 || (field.getModifiers() & 128) == 0) {
+				continue;
+			}
+			fieldList.add(field);
+		}
+		return fieldList;
 	}
 
 }
