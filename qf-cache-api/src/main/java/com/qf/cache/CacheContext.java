@@ -37,7 +37,7 @@ public interface CacheContext {
 	 * @throws CacheNotExistsException
 	 * @throws CacheOperateException
 	 */
-	public <T> void save(CacheSaveOperation<T> operation) throws CacheNotExistsException, CacheOperateException;
+	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException;
 	
 	/**
 	 * 获取缓存对象操作
@@ -47,7 +47,7 @@ public interface CacheContext {
 	 * @throws CacheNotExistsException
 	 * @throws CacheOperateException
 	 */
-	public <T> Map<String, T> get(CacheGetOperation<T> operation) throws CacheNotExistsException, CacheOperateException;
+	public <T> Map<String, T> get(CacheGetOperation operation, Class<T> clazz) throws CacheNotExistsException, CacheOperateException;
 	
 	/**
 	 * 删除缓存操作

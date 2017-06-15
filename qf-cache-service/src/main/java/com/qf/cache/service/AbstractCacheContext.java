@@ -1,4 +1,4 @@
-package com.qf.cache;
+package com.qf.cache.service;
 
 import java.util.HashMap;
 import java.util.List;
@@ -6,6 +6,11 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.qf.cache.Cache;
+import com.qf.cache.CacheContext;
+import com.qf.cache.CacheInfo;
+import com.qf.cache.CacheOperation;
+import com.qf.cache.CacheUnit;
 import com.qf.cache.exception.CacheNotExistsException;
 import com.qf.cache.exception.CacheOperateException;
 import com.qf.cache.operation.CacheClearOperation;
@@ -13,7 +18,6 @@ import com.qf.cache.operation.CacheEvictOperation;
 import com.qf.cache.operation.CacheGetOperation;
 import com.qf.cache.operation.CacheSaveOperation;
 import com.qf.cache.operation.CacheStatOperation;
-import com.qf.cache.util.ClassUtils;
 
 /**
  * 
@@ -36,21 +40,21 @@ import com.qf.cache.util.ClassUtils;
 public abstract class AbstractCacheContext implements CacheContext {
 	
 	private Map<CacheUnit, Cache> cacheMap = new HashMap<CacheUnit, Cache>();	
-	private Map<Class<?>, Class<?>> clazzMapping = new HashMap<Class<?>, Class<?>>();
 
 	@Override
-	public <T> void save(CacheSaveOperation<T> operation) throws CacheNotExistsException, CacheOperateException {
+	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
 		cache.put(operation.getKeyValue(), operation.getExpire(), operation.getCondition());
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public <T> Map<String, T> get(CacheGetOperation<T> operation) throws CacheNotExistsException, CacheOperateException {
+	public <T> Map<String, T> get(CacheGetOperation operation, Class<T> clazz) throws CacheNotExistsException, CacheOperateException {	
 		Cache cache = getCache(operation);
 		String namespace = operation.getNamespace();
 		String[] keys = operation.getKeys();
-		Class<T> clazz = (Class<T>)getGenricType(operation.getClass());
+		if (clazz == null) {
+			throw new CacheOperateException(namespace, "Cache batch get result error: target class is null.");
+		}	
 		List<T> objList = cache.get(keys, clazz);
 		if (objList == null || objList.size() != keys.length) {
 			throw new CacheOperateException(namespace, "Cache batch get result error: operation is null or not conform the input keys length.");
@@ -90,15 +94,6 @@ public abstract class AbstractCacheContext implements CacheContext {
 			throw new CacheNotExistsException("Cache not found: " + operation.getNamespace());
 		}
 		return cache;
-	}
-	
-	private Class<?> getGenricType(Class<?> clazz) {
-		Class<?> genricType = clazzMapping.get(clazz);
-		if (genricType == null) {
-			genricType = ClassUtils.getSuperClassGenricType(clazz, 0);
-			clazzMapping.put(clazz, genricType);
-		}
-		return genricType;
 	}
 
 }

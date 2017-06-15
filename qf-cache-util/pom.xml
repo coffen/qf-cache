@@ -14,6 +14,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.qf</groupId>
+			<artifactId>qf-cache-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
 		</dependency>
@@ -28,6 +33,18 @@
 		<dependency>
 			<groupId>com.mangofactory</groupId>
 			<artifactId>swagger-springmvc</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.esotericsoftware</groupId>
+		    <artifactId>kryo</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.alibaba</groupId>
+		    <artifactId>fastjson</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.caucho</groupId>
+		    <artifactId>hessian</artifactId>
 		</dependency>
 	</dependencies>
 </project>

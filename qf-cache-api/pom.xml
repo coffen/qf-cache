@@ -34,17 +34,5 @@
 			<groupId>com.mangofactory</groupId>
 			<artifactId>swagger-springmvc</artifactId>
 		</dependency>
-		<dependency>
-		    <groupId>com.esotericsoftware</groupId>
-		    <artifactId>kryo</artifactId>
-		</dependency>
-		<dependency>
-		    <groupId>com.alibaba</groupId>
-		    <artifactId>fastjson</artifactId>
-		</dependency>
-		<dependency>
-		    <groupId>com.caucho</groupId>
-		    <artifactId>hessian</artifactId>
-		</dependency>
 	</dependencies>
 </project>

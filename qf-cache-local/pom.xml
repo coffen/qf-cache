@@ -19,7 +19,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.qf</groupId>
-			<artifactId>qf-cache-api</artifactId>
+			<artifactId>qf-cache-util</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

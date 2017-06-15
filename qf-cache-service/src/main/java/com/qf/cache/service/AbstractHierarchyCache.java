@@ -1,4 +1,4 @@
-package com.qf.cache;
+package com.qf.cache.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,6 +7,10 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 
+import com.qf.cache.Cache;
+import com.qf.cache.CacheInfo;
+import com.qf.cache.CacheSaveConditionEnum;
+import com.qf.cache.HierarchyCache;
 import com.qf.cache.exception.CacheOperateException;
 
 /**
