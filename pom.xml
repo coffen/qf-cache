@@ -34,6 +34,7 @@
 		<kryo-version>4.0.0</kryo-version>
 		<fastjson-version>1.2.24</fastjson-version>
 		<hessian-version>4.0.38</hessian-version>
+		<javassist-version>3.21.0-GA</javassist-version>
 	</properties>
 	<repositories>
 		<repository>
@@ -511,6 +512,11 @@
 			    <groupId>com.caucho</groupId>
 			    <artifactId>hessian</artifactId>
 			    <version>${hessian-version}</version>
+			</dependency>
+			<dependency>
+			    <groupId>org.javassist</groupId>
+			    <artifactId>javassist</artifactId>
+			    <version>${javassist-version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
