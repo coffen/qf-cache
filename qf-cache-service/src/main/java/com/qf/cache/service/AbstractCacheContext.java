@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.qf.cache.Cache;
 import com.qf.cache.CacheContext;
@@ -18,6 +20,7 @@ import com.qf.cache.operation.CacheEvictOperation;
 import com.qf.cache.operation.CacheGetOperation;
 import com.qf.cache.operation.CacheSaveOperation;
 import com.qf.cache.operation.CacheStatOperation;
+import com.qf.cache.util.ClasspathPackageScanner;
 
 /**
  * 
@@ -39,7 +42,30 @@ import com.qf.cache.operation.CacheStatOperation;
  */
 public abstract class AbstractCacheContext implements CacheContext {
 	
+	private static Logger log = LoggerFactory.getLogger(AbstractCacheContext.class);
+	
 	private Map<CacheUnit, Cache> cacheMap = new HashMap<CacheUnit, Cache>();	
+	private CacheCascadeConfig config;
+	
+	private String scannedPackage;
+	
+	public AbstractCacheContext(String pkg) {
+		this.scannedPackage = pkg;
+		
+		init();
+	}
+	
+	private void init() {
+		config = new CacheCascadeConfig();
+		ClasspathPackageScanner scanner = new ClasspathPackageScanner(scannedPackage);
+		try {
+			List<String> clazzList = scanner.getFullyQualifiedClassNameList();
+			config.parse(clazzList);
+		} 
+		catch (Exception e) {
+			log.error("缓存上下文初始化错误", e);
+		}
+	}
 
 	@Override
 	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {

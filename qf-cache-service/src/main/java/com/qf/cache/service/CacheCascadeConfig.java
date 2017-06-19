@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.qf.cache.anno.CacheCascadeEnum;
 import com.qf.cache.anno.CacheField;
 import com.qf.cache.anno.CacheType;
+import com.qf.cache.service.exception.ClassParseException;
 import com.qf.cache.util.ClassUtils;
 
 import javassist.ClassPool;
@@ -47,11 +48,14 @@ public class CacheCascadeConfig {
 	private Map<Class<?>, ClassWrap> clazzMapping = new HashMap<Class<?>, ClassWrap>();
 	private Map<Class<?>, List<FieldWrap>> fieldMapping = new HashMap<Class<?>, List<FieldWrap>>();
 	
+	private ClassLoader clazzLoader = getClass().getClassLoader();
+	
 	// 解析有CacheType注解的类
-	public void parse(List<Class<?>> clazzList) {
-		if (CollectionUtils.isEmpty(clazzList)) {
+	public void parse(List<String> clazzNameList) throws ClassParseException {
+		if (CollectionUtils.isEmpty(clazzNameList)) {
 			return;
 		}
+		List<Class<?>> clazzList = loadClass(clazzNameList);
 		for (Class<?> clazz : clazzList) {
 			ClassWrap clazzWrap = parseClass(clazz);
 			if (clazzWrap != null) {
@@ -69,9 +73,24 @@ public class CacheCascadeConfig {
 		}
 	}
 	
+	private List<Class<?>> loadClass(List<String> clazzNameList) throws ClassParseException {
+		List<Class<?>> loadedClazzList = new ArrayList<Class<?>>();
+		String clazz = null;
+		try {
+			for (String clazzName : clazzNameList) {
+				clazz = clazzName;
+				loadedClazzList.add(clazzLoader.loadClass(clazzName));
+			}
+		}
+		catch (ClassNotFoundException e) {
+			throw new ClassParseException(clazz, e.getMessage());
+		}
+		return loadedClazzList;
+	}
+	
 	// 解析缓存类设定
 	private ClassWrap parseClass(Class<?> clazz) {
-		if (fieldMapping.containsKey(clazz)) {
+		if (clazzMapping.containsKey(clazz)) {
 			log.error("{}已经解析过Class", clazz);
 			return null;
 		}
@@ -91,7 +110,7 @@ public class CacheCascadeConfig {
 	
 	// 解析缓存变量设定
 	private List<FieldWrap> parseField(Class<?> clazz) {
-		if (clazzMapping.containsKey(clazz)) {
+		if (fieldMapping.containsKey(clazz)) {
 			log.error("{}已经解析过Field", clazz);
 			return null;
 		}
@@ -154,7 +173,7 @@ public class CacheCascadeConfig {
 			}
 		}
 		// 构造代理类
-		if (parentSerializeClazz == null || noneSerializedFields.size() == 0) {
+		if (parentSerializeClazz == null && noneSerializedFields.size() == 0) {
 			clazzWrap.setSerializeClazz(clazz);
 			return clazz;
 		}
@@ -168,8 +187,9 @@ public class CacheCascadeConfig {
 				CtField ctField = ctClazz.getField(f.getName());
 				ctField.setModifiers(AccessFlag.TRANSIENT);
 			}
-			clazzWrap.setSerializeClazz(ctClazz.toClass());
-			return ctClazz.toClass();
+			Class<?> targetClazz = ctClazz.toClass(clazz.getClassLoader(), clazz.getProtectionDomain());
+			clazzWrap.setSerializeClazz(targetClazz);
+			return targetClazz;
 		}
 		catch (Exception e) {
 			log.error("创建代理类错误: " + clazz, e);

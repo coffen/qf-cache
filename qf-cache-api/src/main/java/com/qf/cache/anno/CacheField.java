@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
  * @version: v1.0
  *
  */
-@Target({ElementType.TYPE})
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface CacheField {

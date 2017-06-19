@@ -12,6 +12,24 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/**
+ * 
+ * <p>
+ * Project Name: C2C商城
+ * <br>
+ * Description: 包扫描器
+ * <br>
+ * File Name: ClasspathPackageScanner.java
+ * <br>
+ * Copyright: Copyright (C) 2015 All Rights Reserved.
+ * <br>
+ * Company: 杭州偶尔科技有限公司
+ * <br>
+ * @author 穷奇
+ * @create time：2017年6月19日 下午4:26:08 
+ * @version: v1.0
+ *
+ */
 public class ClasspathPackageScanner {
 	
 	private String basePackage;
@@ -40,33 +58,16 @@ public class ClasspathPackageScanner {
 			URL url = urls.nextElement();
 			String protocol = url.getProtocol();
 
-			List<String> names = null;
 			if ("file".equals(protocol)) {
 				String filePath = URLDecoder.decode(url.getFile(), "UTF-8");
-				names = readFromDirectory(basePackage, filePath, new ArrayList<String>());
+				readFromDirectory(basePackage, filePath, nameList);
 			} 
 			else if ("jar".equals(protocol)) {
-				names = readFromJarFile(url, splashPath);
-			}
-
-			for (String name : names) {
-				if (isClassFile(name)) {
-					nameList.add(toFullyQualifiedName(name, basePackage));
-				} 
-				else {
-					doScan(basePackage + "." + name, nameList);
-				}
+				readFromJarFile(url, splashPath);
 			}
 		}
 		return nameList;
 	}
-
-	private String toFullyQualifiedName(String shortName, String basePackage) {
-        StringBuilder sb = new StringBuilder(basePackage);
-        sb.append('.').append(trimExtension(shortName));
-
-        return sb.toString();
-    }
 	
 	private List<String> readFromDirectory(String packageName, String path, List<String> clazzList) {
 		File dir = new File(path);
@@ -118,22 +119,9 @@ public class ClasspathPackageScanner {
 		
 		return clazzList;
 	}
-
-	private boolean isClassFile(String name) {
-		return name.endsWith(".class");
-	}
-
+	
 	private static String dotToSplash(String name) {
 		return name.replaceAll("\\.", "/");
-	}
-
-	private static String trimExtension(String name) {
-		int pos = name.indexOf('.');
-		if (-1 != pos) {
-			return name.substring(0, pos);
-		}
-
-		return name;
 	}
 
 }

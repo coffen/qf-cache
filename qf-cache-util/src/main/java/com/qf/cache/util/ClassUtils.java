@@ -68,7 +68,7 @@ public class ClassUtils {
 				continue;
 			}
 			// 过滤static, transient修饰的字段
-			if ((field.getModifiers() & 8) == 0 || (field.getModifiers() & 128) == 0) {
+			if ((field.getModifiers() & 8) != 0 || (field.getModifiers() & 128) != 0) {
 				continue;
 			}
 			fieldList.add(field);
