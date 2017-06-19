@@ -11,6 +11,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cglib.beans.BeanCopier;
 
 import com.qf.cache.anno.CacheCascadeEnum;
 import com.qf.cache.anno.CacheField;
@@ -46,6 +47,7 @@ public class CacheCascadeConfig {
 	private static Logger log = LoggerFactory.getLogger(CacheCascadeConfig.class);
 	
 	private Map<Class<?>, ClassWrap> clazzMapping = new HashMap<Class<?>, ClassWrap>();
+	private Map<Class<?>, Class<?>> reverseMapping = new HashMap<Class<?>, Class<?>>();
 	private Map<Class<?>, List<FieldWrap>> fieldMapping = new HashMap<Class<?>, List<FieldWrap>>();
 	
 	private ClassLoader clazzLoader = getClass().getClassLoader();
@@ -71,6 +73,54 @@ public class CacheCascadeConfig {
 		for (Entry<Class<?>, List<FieldWrap>> entry : fieldMapping.entrySet()) {
 			buildTargetClass(entry.getKey(), entry.getValue());
 		}
+	}
+	
+	// 复制对象
+	public Object copyBean(Object obj) {
+		Object copyed = null;
+		if (obj != null) {
+			Class<?> srcClazz = obj.getClass();
+			ClassWrap wrap = clazzMapping.get(srcClazz);
+			if (wrap != null && wrap.getSerializeClazz() != null && wrap.getCopier() != null) {
+				try {
+					copyed = wrap.getSerializeClazz().newInstance();
+					wrap.getCopier().copy(obj, copyed, null);
+				}
+				catch(Exception e) {
+					log.error("复制Bean失败", e);
+				}
+			}
+		}
+		return copyed;
+	}
+	
+	// 复制对象
+	public Object reverseCopyBean(Object obj) {
+		Object copyed = null;
+		if (obj != null) {
+			Class<?> serializedClazz = obj.getClass();
+			Class<?> srcClazz = reverseMapping.get(serializedClazz);
+			ClassWrap wrap = clazzMapping.get(srcClazz);
+			if (wrap != null) {
+				try {
+					copyed = srcClazz.newInstance();
+					wrap.getReverseCopier().copy(obj, copyed, null);
+				}
+				catch(Exception e) {
+					log.error("复制Bean失败", e);
+				}
+			}
+		}
+		return copyed;
+	}
+	
+	public Class<?> getTargetClass(Class<?> srcClazz) {
+		Class<?> targetClazz = null;
+		ClassWrap wrap = clazzMapping.get(srcClazz);
+		if (wrap != null) {
+			targetClazz = wrap.getSerializeClazz();
+		}
+		return targetClazz;
 	}
 	
 	private List<Class<?>> loadClass(List<String> clazzNameList) throws ClassParseException {
@@ -109,7 +159,7 @@ public class CacheCascadeConfig {
 	}
 	
 	// 解析缓存变量设定
-	private List<FieldWrap> parseField(Class<?> clazz) {
+	private List<FieldWrap> parseField(Class<?> clazz) throws ClassParseException {
 		if (fieldMapping.containsKey(clazz)) {
 			log.error("{}已经解析过Field", clazz);
 			return null;
@@ -118,7 +168,7 @@ public class CacheCascadeConfig {
 			log.error("{}没有CacheType注解", clazz);
 			return null;
 		}
-		List<Field> fieldList = ClassUtils.getCacheFields(clazz);		
+		List<Field> fieldList = ClassUtils.getCacheFields(clazz);
 		List<FieldWrap> wrapList = new ArrayList<FieldWrap>();
 		if (CollectionUtils.isNotEmpty(fieldList)) {
 			for (Field f : fieldList) {
@@ -128,6 +178,13 @@ public class CacheCascadeConfig {
 				FieldWrap warp = new FieldWrap();
 				Class<?> fieldClazz = f.getType();
 				CacheField cf = f.getAnnotation(CacheField.class);
+				if (StringUtils.isNotBlank(cf.key())) {
+					Field keyField = ClassUtils.getKeyFields(clazz, cf.key());
+					if (keyField == null) {
+						throw new ClassParseException(clazz.getName(), f.getName() + ": CacheField注解key值无效");
+					}
+					warp.setKeyField(keyField);
+				}
 				warp.setFieldClazz(fieldClazz);
 				warp.setBelongClazz(clazz);
 				warp.setField(f);
@@ -189,6 +246,11 @@ public class CacheCascadeConfig {
 			}
 			Class<?> targetClazz = ctClazz.toClass(clazz.getClassLoader(), clazz.getProtectionDomain());
 			clazzWrap.setSerializeClazz(targetClazz);
+			clazzWrap.setCopier(BeanCopier.create(clazz, targetClazz, false));
+			clazzWrap.setReverseCopier(BeanCopier.create(targetClazz, clazz, false));
+			
+			reverseMapping.put(targetClazz, clazz);	// 设置类的反向映射关系
+			
 			return targetClazz;
 		}
 		catch (Exception e) {
@@ -213,10 +275,12 @@ public class CacheCascadeConfig {
 	/**
 	 * 类封装, 包括字节码类, 名称空间
 	 */
-	private class ClassWrap {
+	class ClassWrap {
 		
 		private String[] namespace;
-		private Class<?> serializeClazz; // 处理过的生成类
+		private Class<?> serializeClazz; 	// 动态生成的类
+		private BeanCopier copier;		 	// 对象复制器
+		private BeanCopier reverseCopier;	// 反向复制器
 		
 		public String[] getNamespace() {
 			return namespace;
@@ -233,15 +297,32 @@ public class CacheCascadeConfig {
 		public void setSerializeClazz(Class<?> serializeClazz) {
 			this.serializeClazz = serializeClazz;
 		}
+		
+		public BeanCopier getCopier() {
+			return copier;
+		}
+		
+		public void setCopier(BeanCopier copier) {
+			this.copier = copier;
+		}
+		
+		public BeanCopier getReverseCopier() {
+			return reverseCopier;
+		}
+		
+		public void setReverseCopier(BeanCopier reverseCopier) {
+			this.reverseCopier = reverseCopier;
+		}
 
 	}
 	
 	/**
 	 * 类成员变量封装, 包括变量对应类, 类指定名称空间和级联缓存方式
 	 */
-	private class FieldWrap {
+	class FieldWrap {
 		
 		private Field field;
+		private Field keyField;
 		private Class<?> fieldClazz;
 		private Class<?> belongClazz;
 		private String[] namespace;
@@ -253,6 +334,14 @@ public class CacheCascadeConfig {
 		
 		public void setField(Field field) {
 			this.field = field;
+		}
+		
+		public Field getKeyField() {
+			return keyField;
+		}
+		
+		public void setKeyField(Field keyField) {
+			this.keyField = keyField;
 		}
 		
 		public Class<?> getFieldClazz() {

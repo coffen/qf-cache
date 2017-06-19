@@ -35,6 +35,7 @@
 		<fastjson-version>1.2.24</fastjson-version>
 		<hessian-version>4.0.38</hessian-version>
 		<javassist-version>3.21.0-GA</javassist-version>
+		<cglib-version>3.2.4</cglib-version>
 	</properties>
 	<repositories>
 		<repository>
@@ -517,6 +518,11 @@
 			    <groupId>org.javassist</groupId>
 			    <artifactId>javassist</artifactId>
 			    <version>${javassist-version}</version>
+			</dependency>
+			<dependency>
+			    <groupId>cglib</groupId>
+			    <artifactId>cglib</artifactId>
+			    <version>${cglib-version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

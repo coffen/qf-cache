@@ -3,6 +3,7 @@ package com.qf.cache.service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -85,25 +86,45 @@ public abstract class AbstractCacheContext implements CacheContext {
 	@Override
 	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {
 		Cache cache = getCache(operation);
+		convertKeyValue(operation);
 		cache.put(operation.getKeyValue(), operation.getExpire(), operation.getCondition());
+	}
+	
+	private void convertKeyValue(CacheSaveOperation operation) {
+		if (operation == null || operation.getKeyValue() == null) {
+			return;
+		}
+		for (Entry<String, Object> entry : operation.getKeyValue().entrySet()) {
+			entry.setValue(config.copyBean(entry.getValue()));
+		}
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> Map<String, T> get(CacheGetOperation operation, Class<T> clazz) throws CacheNotExistsException, CacheOperateException {	
 		Cache cache = getCache(operation);
 		String namespace = operation.getNamespace();
 		String[] keys = operation.getKeys();
 		if (clazz == null) {
 			throw new CacheOperateException(namespace, "Cache batch get result error: target class is null.");
-		}	
-		List<T> objList = cache.get(keys, clazz);
+		}
+		Class<?> serializeClazz = config.getTargetClass(clazz);
+		if (serializeClazz == null) {
+			serializeClazz = Object.class;
+		}
+		List<?> objList = cache.get(keys, serializeClazz);
 		if (objList == null || objList.size() != keys.length) {
 			throw new CacheOperateException(namespace, "Cache batch get result error: operation is null or not conform the input keys length.");
 		}
 		Map<String, T> result = new HashMap<String, T>();
 		for (int i = 0; i < objList.size(); i++) {
-			T obj = objList.get(i);
-			result.put(keys[i], obj);
+			Object obj = objList.get(i);
+			Object copyed = config.reverseCopyBean(obj);
+			T t = null;
+			if (copyed != null) {
+				t = (T)copyed;
+			}
+			result.put(keys[i], t);
 		}
 		return result;
 	}

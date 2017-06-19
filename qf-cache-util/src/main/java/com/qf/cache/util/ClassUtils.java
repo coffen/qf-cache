@@ -6,6 +6,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.qf.cache.anno.CacheField;
 
 /**
@@ -26,7 +30,9 @@ import com.qf.cache.anno.CacheField;
  * @version: v1.0
  *
  */
-public class ClassUtils {	
+public class ClassUtils {
+	
+	private static Logger log = LoggerFactory.getLogger(ClassUtils.class);
 	
 	/**
 	 * 获取Class的泛型类, 如不存在则返回Object.class
@@ -74,6 +80,39 @@ public class ClassUtils {
 			fieldList.add(field);
 		}
 		return fieldList;
+	}
+	
+	/**
+	 * 获取key值对应的属性
+	 * 
+	 * @param clazz
+	 * @return
+	 */
+	public static Field getKeyFields(Class<?> clazz, String key) {
+		Field keyField = null;
+		if (clazz == null || StringUtils.isBlank(key)) {
+			return keyField;
+		}
+		try {
+			keyField = clazz.getField(key);
+			if (key.equals(keyField.getName())) {
+				log.error("CacheField注解key值对应属性不能设置为当前注解的属性");
+				keyField = null;
+			}
+			if (keyField.isAnnotationPresent(CacheField.class)) {
+				log.error("CacheField注解key值对应属性不能有CacheField注解");
+				keyField = null;
+			}
+			if ((keyField.getModifiers() & 8) != 0 || (keyField.getModifiers() & 128) != 0) {
+				log.error("CacheField注解key值对应属性不能包含transient或static修饰符");
+				keyField = null;
+			}
+		}
+		catch (Exception e) {
+			log.error("CacheField注解key值对应属性不存在");
+			return keyField;
+		}		
+		return keyField;
 	}
 
 }

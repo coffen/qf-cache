@@ -29,6 +29,18 @@ import java.lang.annotation.Target;
 @Documented
 public @interface CacheField {
 	
+	/**
+	 * 缓存级联保存设置
+	 * 
+	 * @return
+	 */
 	CacheCascadeEnum cascade() default CacheCascadeEnum.FULL;
+	
+	/**
+	 * 缓存时以哪个属性做为键值, 设置为当前属性自身或者其它非序列化的属性时报错
+	 * 
+	 * @return
+	 */
+	String key() default "";
 
 }
