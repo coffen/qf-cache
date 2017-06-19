@@ -23,6 +23,7 @@ import com.alibaba.fastjson.JSON;
 import com.qf.cache.Cache;
 import com.qf.cache.CacheInfo;
 import com.qf.cache.CacheSaveConditionEnum;
+import com.qf.cache.CacheUnit;
 import com.qf.cache.Serializer;
 import com.qf.cache.exception.CacheCreateException;
 import com.qf.cache.exception.CacheOperateException;
@@ -207,8 +208,8 @@ public class EhCache implements Cache {
 		return new CacheInfo();
 	}
 	
-	public String getNamespace() {
-		return namespace;
+	public CacheUnit getCacheUnit() {
+		return new CacheUnit(namespace, serializer);
 	}
 
 }

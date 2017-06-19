@@ -1,10 +1,6 @@
 package com.qf.cache;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.qf.cache.exception.CacheCreateException;
 
@@ -30,18 +26,14 @@ public class CacheUnit implements Serializable {
 	
 	private static final long serialVersionUID = 6982793212151189686L;
 	
-	private String namespace;					// 名称空间
-	private Serializer serializer;				// 序列化工具
-	private List<CachePolicy<?>> cachePolicies;	// 缓存策略
+	private final String namespace;						// 名称空间
+	private final Serializer serializer;				// 序列化工具
 	
 	public CacheUnit(String namespace) throws CacheCreateException {
 		this(namespace, null);
 	}
 	
-	public CacheUnit(String namespace, Serializer serializer) throws CacheCreateException {
-		if (StringUtils.isBlank(namespace)) {
-			throw new CacheCreateException("缓存名称空间为空");
-		}
+	public CacheUnit(String namespace, Serializer serializer) {
 		this.namespace = namespace;
 		this.serializer = serializer;
 	}
@@ -52,14 +44,6 @@ public class CacheUnit implements Serializable {
 	
 	public Serializer getSerializer() {
 		return serializer;
-	}
-	
-	public void addCachePolicy(CachePolicy<?> policy) {
-		this.cachePolicies.add(policy);
-	}
-	
-	public List<CachePolicy<?>> getCachePolicies() {
-		return Collections.unmodifiableList(cachePolicies);
 	}
 	
 	@Override

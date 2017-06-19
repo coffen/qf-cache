@@ -3,6 +3,7 @@ package com.qf.cache.service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 	
 	private static Logger log = LoggerFactory.getLogger(AbstractCacheContext.class);
 	
-	private Map<CacheUnit, Cache> cacheMap = new HashMap<CacheUnit, Cache>();	
+	private ConcurrentHashMap<String, Cache> cacheMap = new ConcurrentHashMap<String, Cache>();	
 	private CacheCascadeConfig config;
 	
 	private String scannedPackage;
@@ -65,6 +66,20 @@ public abstract class AbstractCacheContext implements CacheContext {
 		catch (Exception e) {
 			log.error("缓存上下文初始化错误", e);
 		}
+	}
+	
+	public void addCache(Cache cache) {
+		if (cache == null) {
+			log.error("添加缓存错误, 参数为空");
+		}
+		CacheUnit unit = cache.getCacheUnit();
+		if (unit == null) {
+			log.error("缓存单元获取失败");
+		}
+		if (cacheMap.containsKey(unit.getNamespace())) {
+			log.error("缓存已添加: {}", unit.getNamespace());
+		}
+		cacheMap.putIfAbsent(unit.getNamespace(), cache);
 	}
 
 	@Override

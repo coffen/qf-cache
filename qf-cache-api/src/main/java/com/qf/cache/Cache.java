@@ -68,8 +68,10 @@ public interface Cache {
 	public CacheInfo stat() throws CacheOperateException;
 	
 	/**
-	 * <p> 返回缓存名称
+	 * <p> 返回缓存单元
+	 * 
+	 * @return
 	 */
-	public String getNamespace();
+	public CacheUnit getCacheUnit();
 
 }

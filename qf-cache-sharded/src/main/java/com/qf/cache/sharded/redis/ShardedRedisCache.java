@@ -18,6 +18,7 @@ import com.alibaba.fastjson.JSON;
 import com.qf.cache.Cache;
 import com.qf.cache.CacheInfo;
 import com.qf.cache.CacheSaveConditionEnum;
+import com.qf.cache.CacheUnit;
 import com.qf.cache.Serializer;
 import com.qf.cache.exception.CacheCreateException;
 import com.qf.cache.exception.CacheOperateException;
@@ -198,8 +199,8 @@ public class ShardedRedisCache implements Cache {
 	}
 
 	@Override
-	public String getNamespace() {
-		return null;
+	public CacheUnit getCacheUnit() {
+		return new CacheUnit(config.getNamespace(), config.getSerializer());
 	}
 	
 	private ShardedJedis getShardedJedis(int db) {
