@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import com.qf.cache.exception.CacheNotExistsException;
 import com.qf.cache.exception.CacheOperateException;
 import com.qf.cache.operation.CacheClearOperation;
 import com.qf.cache.operation.CacheEvictOperation;
+import com.qf.cache.operation.CacheFieldOperation;
 import com.qf.cache.operation.CacheGetOperation;
 import com.qf.cache.operation.CacheSaveOperation;
 import com.qf.cache.operation.CacheStatOperation;
@@ -85,23 +87,79 @@ public abstract class AbstractCacheContext implements CacheContext {
 
 	@Override
 	public void save(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {
-		Cache cache = getCache(operation);
-		convertKeyValue(operation);
-		cache.put(operation.getKeyValue(), operation.getExpire(), operation.getCondition());
-	}
-	
-	private void convertKeyValue(CacheSaveOperation operation) {
 		if (operation == null || operation.getKeyValue() == null) {
-			return;
+			throw new CacheOperateException(operation == null ? "" : operation.getNamespace(), "Cache save result error: operation is null or valid.");
+		}
+		String namespace = operation.getNamespace();
+		Map<String, Object> copyedKeyValue = convertKeyValue(operation);
+		if (StringUtils.isNotBlank(namespace)) {
+			Cache cache = getCache(operation);
+			cache.put(copyedKeyValue, operation.getExpire(), operation.getCondition());
 		}
 		for (Entry<String, Object> entry : operation.getKeyValue().entrySet()) {
-			entry.setValue(config.copyBean(entry.getValue()));
+			String key = entry.getKey();
+			Object cacheObject = entry.getValue();
+			if (cacheObject == null) {
+				continue;
+			}
+			String[] namespaces = config.getTargetNamespace(cacheObject.getClass());
+			if (namespaces != null && namespaces.length > 0) {
+				Map<String, Object> singleMap = new HashMap<String, Object>();
+				Cache cache = null;
+				for (String ns : namespaces) {
+					if (StringUtils.isNotBlank(ns) && !ns.equals(namespace)) {
+						cache = getCache(ns);
+						singleMap.clear();
+						singleMap.put(key, copyedKeyValue.get(key));
+						cache.put(singleMap, operation.getExpire(), operation.getCondition());
+					}
+				}
+			}
+		}
+		cascadeSaveFields(operation);
+	}
+	
+	private Map<String, Object> convertKeyValue(CacheSaveOperation operation) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		if (operation != null && operation.getKeyValue() != null) {
+			for (Entry<String, Object> entry : operation.getKeyValue().entrySet()) {
+				map.put(entry.getKey(), config.copyBean(entry.getValue()));
+			}
+		}
+		return map;
+	}
+	
+	private void cascadeSaveFields(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {
+		for (Entry<String, Object> entry : operation.getKeyValue().entrySet()) {
+			Object cacheObject = entry.getValue();
+			if (cacheObject == null) {
+				continue;
+			}
+			List<CacheFieldOperation> operationList = config.getFieldsOperation(cacheObject, cacheObject.getClass());
+			if (CollectionUtils.isNotEmpty(operationList)) {
+				for (CacheFieldOperation cfo : operationList) {
+					CacheSaveOperation saveOperation = null;
+					try {
+						saveOperation = cfo.generateCacheSaveOperation(cfo.getKey(), cacheObject, operation.getExpire(), operation.getCondition());
+					}
+					catch (Exception e) {
+						log.error("生成级联保存操作错误: " + cfo.getFieldName(), e);
+						throw new CacheOperateException(cfo.getNamespace(), "生成级联保存操作错误: " + cfo.getFieldName());
+					}
+					if (saveOperation != null) {
+						save(saveOperation);
+					}
+				}
+			}
 		}
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> Map<String, T> get(CacheGetOperation operation, Class<T> clazz) throws CacheNotExistsException, CacheOperateException {	
+	public <T> Map<String, T> get(CacheGetOperation operation, Class<T> clazz) throws CacheNotExistsException, CacheOperateException {
+		if (operation == null || StringUtils.isBlank(operation.getNamespace()) || operation.getKeys() == null || operation.getKeys().length == 0) {
+			throw new CacheOperateException(operation == null ? "" : operation.getNamespace(), "Cache batch get result error: operation is null or valid.");
+		}
 		Cache cache = getCache(operation);
 		String namespace = operation.getNamespace();
 		String[] keys = operation.getKeys();
@@ -120,6 +178,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 		for (int i = 0; i < objList.size(); i++) {
 			Object obj = objList.get(i);
 			Object copyed = config.reverseCopyBean(obj);
+			fulfillFields(cache, copyed, clazz);
 			T t = null;
 			if (copyed != null) {
 				t = (T)copyed;
@@ -128,32 +187,70 @@ public abstract class AbstractCacheContext implements CacheContext {
 		}
 		return result;
 	}
+	
+	private void fulfillFields(Cache cache, Object obj, Class<?> clazz) throws CacheNotExistsException, CacheOperateException {
+		List<CacheFieldOperation> operationList = config.getFieldsOperation(obj, clazz);
+		if (CollectionUtils.isNotEmpty(operationList)) {
+			for (CacheFieldOperation fieldOperation : operationList) {
+				if (fieldOperation == null) {
+					continue;
+				}
+				CacheGetOperation getOperation = fieldOperation.generateCacheGetOperation();
+				Map<String, ?> fieldValue = get(getOperation, fieldOperation.getFieldClass());
+				if (obj != null && fieldValue != null) {
+					try {
+						fieldOperation.setValue(obj, fieldValue.get(fieldOperation.getKey()));
+					}
+					catch (Exception e) {
+						log.error("设置缓存对象级联属性错误: " + fieldOperation.getFieldName(), e);
+						throw new CacheOperateException(fieldOperation.getNamespace(), "设置缓存对象级联属性错误: " + fieldOperation.getFieldName());
+					}
+				}
+			}
+		}
+	}
 
 	@Override
 	public void evict(CacheEvictOperation operation) throws CacheNotExistsException, CacheOperateException {
+		if (operation == null || StringUtils.isBlank(operation.getNamespace()) || operation.getKeys() == null) {
+			throw new CacheOperateException(operation == null ? "" : operation.getNamespace(), "Cache evict result error: operation is null or valid.");
+		}
 		Cache cache = getCache(operation);
 		cache.evict(operation.getKeys());
 	}
 
 	@Override
 	public void clear(CacheClearOperation operation) throws CacheNotExistsException, CacheOperateException {
+		if (operation == null || StringUtils.isBlank(operation.getNamespace())) {
+			throw new CacheOperateException(operation == null ? "" : operation.getNamespace(), "Cache clear result error: operation is null or valid.");
+		}
 		Cache cache = getCache(operation);
 		cache.clear();
 	}
 
 	@Override
 	public CacheInfo stat(CacheStatOperation operation) throws CacheNotExistsException, CacheOperateException {
+		if (operation == null || StringUtils.isBlank(operation.getNamespace())) {
+			throw new CacheOperateException(operation == null ? "" : operation.getNamespace(), "Cache stat result error: operation is null or valid.");
+		}
 		Cache cache = getCache(operation);
 		return cache.stat();
 	}
 	
 	private Cache getCache(CacheOperation operation) throws CacheNotExistsException {
-		if (operation == null || StringUtils.isBlank(operation.getNamespace())) {
+		if (operation == null) {
+			throw new CacheNotExistsException("Cache operation is null.");
+		}
+		return getCache(operation.getNamespace());
+	}
+	
+	private Cache getCache(String namespace) throws CacheNotExistsException {
+		if (StringUtils.isBlank(namespace)) {
 			throw new CacheNotExistsException("Cache namespace is empty.");
 		}
-		Cache cache = cacheMap.get(operation.getNamespace());
+		Cache cache = cacheMap.get(namespace);
 		if (cache == null) {
-			throw new CacheNotExistsException("Cache not found: " + operation.getNamespace());
+			throw new CacheNotExistsException("Cache not found: " + namespace);
 		}
 		return cache;
 	}

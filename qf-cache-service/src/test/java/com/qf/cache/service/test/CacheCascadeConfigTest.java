@@ -2,16 +2,23 @@ package com.qf.cache.service.test;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
 import com.esotericsoftware.minlog.Log;
-import com.qf.cache.local.EhCache;
+import com.qf.cache.exception.CacheCreateException;
 import com.qf.cache.operation.CacheGetOperation;
 import com.qf.cache.operation.CacheSaveOperation;
 import com.qf.cache.service.DefaultCacheContext;
+import com.qf.cache.sharded.redis.ClusteredRedisCache;
+
+import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.JedisCluster;
 
 /**
  * 
@@ -33,13 +40,33 @@ import com.qf.cache.service.DefaultCacheContext;
  */
 public class CacheCascadeConfigTest {
 	
+	JedisCluster cluster;
+	
+	String namespaceA = "com.qf.cache.moduleA";
+	String namespaceB = "com.qf.cache.innerModuleB";
+	
+	@Before
+	public void before() throws CacheCreateException {
+		Set<HostAndPort> nodeSet = new HashSet<HostAndPort>();
+		nodeSet.add(new HostAndPort("192.168.48.128", 9001));
+		nodeSet.add(new HostAndPort("192.168.48.128", 9002));
+		nodeSet.add(new HostAndPort("192.168.48.128", 9003));
+		nodeSet.add(new HostAndPort("192.168.48.128", 9004));
+		nodeSet.add(new HostAndPort("192.168.48.128", 9005));
+		nodeSet.add(new HostAndPort("192.168.48.128", 9006));
+		cluster = new JedisCluster(nodeSet);
+	}
+	
 	@Test
 	public void testParseClazz() {
 		DefaultCacheContext cacheContent = new DefaultCacheContext("com.qf.cache.service.test");
 		try {
-			String namespace = "com.qf.cache.test";
-			EhCache cache = EhCache.instance(namespace);
-			cacheContent.addCache(cache);
+			ClusteredRedisCache cacheA = ClusteredRedisCache.instance(namespaceA);
+			cacheA.setJedisCluster(cluster);
+			cacheContent.addCache(cacheA);
+			ClusteredRedisCache cacheB = ClusteredRedisCache.instance(namespaceB);
+			cacheB.setJedisCluster(cluster);
+			cacheContent.addCache(cacheB);
 			
 			Map<String, Object> map = new HashMap<String, Object>();
 			ModuleA a = new ModuleA();
@@ -58,20 +85,27 @@ public class CacheCascadeConfigTest {
 			b.setCreatedAt(new Date());
 			a.setModuleB(b);
 			
-			String key = "moduleA";
+			String key = String.valueOf(a.getId());
 			map.put(key, a);
 			
 			CacheSaveOperation saveOperation = new CacheSaveOperation();
-			saveOperation.setNamespace(namespace);
+			saveOperation.setNamespace(namespaceA);
 			saveOperation.setKeyValue(map);
 			cacheContent.save(saveOperation);
 			
 			CacheGetOperation getOperation = new CacheGetOperation();
-			getOperation.setNamespace(namespace);
+			getOperation.setNamespace(namespaceA);
 			getOperation.setKeys(new String[] { key });
 			
 			Map<String, ModuleA> loaded = cacheContent.get(getOperation, ModuleA.class);
-			Log.error(JSON.toJSONString(loaded));			
+			Log.error(JSON.toJSONString(loaded));	
+			
+			CacheGetOperation getOperation2 = new CacheGetOperation();
+			getOperation2.setNamespace(namespaceB);
+			getOperation2.setKeys(new String[] { "1" });
+			
+			Map<String, InnerModuleB> loaded2 = cacheContent.get(getOperation2, InnerModuleB.class);
+			Log.error(JSON.toJSONString(loaded2));			
 		}
 		catch (Exception e) {
 			e.printStackTrace();

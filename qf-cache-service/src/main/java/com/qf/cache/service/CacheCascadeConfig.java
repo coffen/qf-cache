@@ -16,6 +16,7 @@ import org.springframework.cglib.beans.BeanCopier;
 import com.qf.cache.anno.CacheCascadeEnum;
 import com.qf.cache.anno.CacheField;
 import com.qf.cache.anno.CacheType;
+import com.qf.cache.operation.CacheFieldOperation;
 import com.qf.cache.service.exception.ClassParseException;
 import com.qf.cache.util.ClassUtils;
 
@@ -123,6 +124,47 @@ public class CacheCascadeConfig {
 		return targetClazz;
 	}
 	
+	public String[] getTargetNamespace(Class<?> srcClazz) {
+		String[] namespace = null;
+		ClassWrap wrap = clazzMapping.get(srcClazz);
+		if (wrap != null) {
+			namespace = wrap.getNamespace();
+		}
+		return namespace;
+	}
+	
+	public List<CacheFieldOperation> getFieldsOperation(Object object, Class<?> srcClazz) {
+		List<CacheFieldOperation> operationList = new ArrayList<CacheFieldOperation>();
+		List<FieldWrap> wrapList = fieldMapping.get(srcClazz);
+		if (CollectionUtils.isNotEmpty(wrapList)) {
+			for (FieldWrap wrap : wrapList) {
+				if (wrap == null || wrap.getCascadeType() == CacheCascadeEnum.FULL || wrap.getCascadeType() == CacheCascadeEnum.NONE) {
+					continue;
+				}
+				Field keyField = wrap.getKeyField();
+				if (keyField == null) {
+					continue;
+				}
+				Object obj = null;
+				try {
+					obj = keyField.get(object);
+				}
+				catch (Exception e) {
+					log.error("CacheField获取key值失败: keyField={}", keyField.getName());
+					continue;
+				}
+				if (obj != null && wrap.getNamespace() != null && wrap.getNamespace().length > 0) {
+					String key = obj.toString();
+					if (StringUtils.isNotBlank(key)) {
+						CacheFieldOperation operation = new CacheFieldOperation(wrap.getField(), wrap.getNamespace()[0], key);
+						operationList.add(operation);
+					}
+				}
+			}
+		}
+		return operationList;
+	}
+	
 	private List<Class<?>> loadClass(List<String> clazzNameList) throws ClassParseException {
 		List<Class<?>> loadedClazzList = new ArrayList<Class<?>>();
 		String clazz = null;
@@ -175,14 +217,16 @@ public class CacheCascadeConfig {
 				if (!f.isAnnotationPresent(CacheField.class)) {
 					continue;
 				}
+				f.setAccessible(true);
 				FieldWrap warp = new FieldWrap();
 				Class<?> fieldClazz = f.getType();
 				CacheField cf = f.getAnnotation(CacheField.class);
 				if (StringUtils.isNotBlank(cf.key())) {
-					Field keyField = ClassUtils.getKeyFields(clazz, cf.key());
+					Field keyField = ClassUtils.getKeyFields(clazz, f.getName(), cf.key());
 					if (keyField == null) {
 						throw new ClassParseException(clazz.getName(), f.getName() + ": CacheField注解key值无效");
 					}
+					keyField.setAccessible(true);
 					warp.setKeyField(keyField);
 				}
 				warp.setFieldClazz(fieldClazz);

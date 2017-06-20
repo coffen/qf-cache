@@ -88,29 +88,28 @@ public class ClassUtils {
 	 * @param clazz
 	 * @return
 	 */
-	public static Field getKeyFields(Class<?> clazz, String key) {
+	public static Field getKeyFields(Class<?> clazz, String fieldName, String key) {
 		Field keyField = null;
-		if (clazz == null || StringUtils.isBlank(key)) {
+		if (clazz == null || StringUtils.isBlank(fieldName) || StringUtils.isBlank(key)) {
 			return keyField;
 		}
-		try {
-			keyField = clazz.getField(key);
-			if (key.equals(keyField.getName())) {
-				log.error("CacheField注解key值对应属性不能设置为当前注解的属性");
-				keyField = null;
+		for (; clazz != Object.class; clazz = clazz.getSuperclass()) {
+			try {
+				keyField = clazz.getDeclaredField(key);
+				if (fieldName.equals(keyField.getName())) {
+					log.error("CacheField注解key值对应属性不能设置为当前注解的属性");
+					keyField = null;
+				}
+				if (keyField.isAnnotationPresent(CacheField.class)) {
+					log.error("CacheField注解key值对应属性不能有CacheField注解");
+					keyField = null;
+				}
+				if ((keyField.getModifiers() & 8) != 0 || (keyField.getModifiers() & 128) != 0) {
+					log.error("CacheField注解key值对应属性不能包含transient或static修饰符");
+					keyField = null;
+				}
 			}
-			if (keyField.isAnnotationPresent(CacheField.class)) {
-				log.error("CacheField注解key值对应属性不能有CacheField注解");
-				keyField = null;
-			}
-			if ((keyField.getModifiers() & 8) != 0 || (keyField.getModifiers() & 128) != 0) {
-				log.error("CacheField注解key值对应属性不能包含transient或static修饰符");
-				keyField = null;
-			}
-		}
-		catch (Exception e) {
-			log.error("CacheField注解key值对应属性不存在");
-			return keyField;
+			catch (Exception e) {}	
 		}		
 		return keyField;
 	}

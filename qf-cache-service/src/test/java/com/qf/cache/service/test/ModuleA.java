@@ -17,7 +17,7 @@ public class ModuleA extends ParentModuleC implements Serializable {
 	
 	private transient String style;
 	
-	@CacheField(cascade = CacheCascadeEnum.DEPENDS)
+	@CacheField(cascade = CacheCascadeEnum.DEPENDS, key="id")
 	private InnerModuleB moduleB;
 	
 	public String getTitle() {
