@@ -9,7 +9,6 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.alibaba.fastjson.JSON;
 import com.esotericsoftware.minlog.Log;
 import com.qf.cache.exception.CacheCreateException;
 import com.qf.cache.operation.CacheGetOperation;
@@ -60,6 +59,8 @@ public class CacheCascadeConfigTest {
 	@Test
 	public void testParseClazz() {
 		DefaultCacheContext cacheContent = new DefaultCacheContext("com.qf.cache.service.test");
+		long start = System.currentTimeMillis();
+		Log.error("开始时间:" + start);
 		try {
 			ClusteredRedisCache cacheA = ClusteredRedisCache.instance(namespaceA);
 			cacheA.setJedisCluster(cluster);
@@ -67,45 +68,50 @@ public class CacheCascadeConfigTest {
 			ClusteredRedisCache cacheB = ClusteredRedisCache.instance(namespaceB);
 			cacheB.setJedisCluster(cluster);
 			cacheContent.addCache(cacheB);
-			
-			Map<String, Object> map = new HashMap<String, Object>();
-			ModuleA a = new ModuleA();
-			a.setId(1L);
-			a.setTitle("测试");
-			a.setDir("/usr/lib");
-			a.setRemark("NONE");
-			a.setSort(0);
-			a.setUrl("http://127.0.0.1");
-			
-			InnerModuleB b = new InnerModuleB();
-			b.setImg("http://127.0.0.1/qiniu/product");
-			b.setKey("aoq88y35sdi92324323");
-			b.setWidth(70);
-			b.setHeight(70);
-			b.setCreatedAt(new Date());
-			a.setModuleB(b);
-			
-			String key = String.valueOf(a.getId());
-			map.put(key, a);
-			
-			CacheSaveOperation saveOperation = new CacheSaveOperation();
-			saveOperation.setNamespace(namespaceA);
-			saveOperation.setKeyValue(map);
-			cacheContent.save(saveOperation);
-			
-			CacheGetOperation getOperation = new CacheGetOperation();
-			getOperation.setNamespace(namespaceA);
-			getOperation.setKeys(new String[] { key });
-			
-			Map<String, ModuleA> loaded = cacheContent.get(getOperation, ModuleA.class);
-			Log.error(JSON.toJSONString(loaded));	
-			
-			CacheGetOperation getOperation2 = new CacheGetOperation();
-			getOperation2.setNamespace(namespaceB);
-			getOperation2.setKeys(new String[] { "1" });
-			
-			Map<String, InnerModuleB> loaded2 = cacheContent.get(getOperation2, InnerModuleB.class);
-			Log.error(JSON.toJSONString(loaded2));			
+			for (int i = 0; i < 1000; i++) {
+				Map<String, Object> map = new HashMap<String, Object>();
+				ModuleA a = new ModuleA();
+				a.setId(1L);
+				a.setTitle("测试");
+				a.setDir("/usr/lib");
+				a.setRemark("NONE");
+				a.setSort(0);
+				a.setUrl("http://127.0.0.1");
+				
+				InnerModuleB b = new InnerModuleB();
+				b.setImg("http://127.0.0.1/qiniu/product");
+				b.setKey("aoq88y35sdi92324323");
+				b.setWidth(70);
+				b.setHeight(70);
+				b.setCreatedAt(new Date());
+				a.setModuleB(b);
+				
+				String key = String.valueOf(a.getId());
+				map.put(key, a);
+				
+				CacheSaveOperation saveOperation = new CacheSaveOperation();
+				saveOperation.setNamespace(namespaceA);
+				saveOperation.setKeyValue(map);
+				cacheContent.save(saveOperation);
+				
+				CacheGetOperation getOperation = new CacheGetOperation();
+				getOperation.setNamespace(namespaceA);
+				getOperation.setKeys(new String[] { key });
+				
+//				Map<String, ModuleA> loaded = 
+						cacheContent.get(getOperation, ModuleA.class);
+//				Log.error(JSON.toJSONString(loaded));	
+				
+				CacheGetOperation getOperation2 = new CacheGetOperation();
+				getOperation2.setNamespace(namespaceB);
+				getOperation2.setKeys(new String[] { "1" });
+				
+//				Map<String, InnerModuleB> loaded2 = 
+						cacheContent.get(getOperation2, InnerModuleB.class);
+//				Log.error(JSON.toJSONString(loaded2));
+			}
+			long end = System.currentTimeMillis();
+			Log.error("结束时间:" + start + ", 耗时: " + (end - start));
 		}
 		catch (Exception e) {
 			e.printStackTrace();
