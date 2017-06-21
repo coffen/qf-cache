@@ -68,7 +68,7 @@ public class CacheCascadeConfigTest {
 			ClusteredRedisCache cacheB = ClusteredRedisCache.instance(namespaceB);
 			cacheB.setJedisCluster(cluster);
 			cacheContent.addCache(cacheB);
-			for (int i = 0; i < 1000; i++) {
+			for (int i = 0; i < 1; i++) {
 				Map<String, Object> map = new HashMap<String, Object>();
 				ModuleA a = new ModuleA();
 				a.setId(1L);
@@ -79,6 +79,7 @@ public class CacheCascadeConfigTest {
 				a.setUrl("http://127.0.0.1");
 				
 				InnerModuleB b = new InnerModuleB();
+				b.setModuleId(1L);
 				b.setImg("http://127.0.0.1/qiniu/product");
 				b.setKey("aoq88y35sdi92324323");
 				b.setWidth(70);

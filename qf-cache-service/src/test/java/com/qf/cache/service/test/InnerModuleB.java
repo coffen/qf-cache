@@ -12,6 +12,8 @@ public class InnerModuleB implements Serializable {
 
 	private static final long serialVersionUID = 2404648958155174025L;
 	
+	private Long moduleId;
+	
 	private String img;
 	private String key;
 	
@@ -20,6 +22,17 @@ public class InnerModuleB implements Serializable {
 	
 	@CacheField(cascade = CacheCascadeEnum.NONE)
 	private Date createdAt;
+	
+	@CacheField(cascade = CacheCascadeEnum.DEPENDS, key="moduleId")
+	private ModuleA moduleA;
+	
+	public Long getModuleId() {
+		return moduleId;
+	}
+	
+	public void setModuleId(Long moduleId) {
+		this.moduleId = moduleId;
+	}
 	
 	public String getImg() {
 		return img;

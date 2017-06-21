@@ -1,9 +1,11 @@
 package com.qf.cache.service;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -90,11 +92,20 @@ public abstract class AbstractCacheContext implements CacheContext {
 		if (operation == null || operation.getKeyValue() == null) {
 			throw new CacheOperateException(operation == null ? "" : operation.getNamespace(), "Cache save result error: operation is null or valid.");
 		}
+		CacheKeyHolder holder = buildHolder();
+		save(operation, holder);
+	}
+	
+	private void save(CacheSaveOperation operation, CacheKeyHolder holder) throws CacheNotExistsException, CacheOperateException {
 		String namespace = operation.getNamespace();
 		Map<String, Object> copyedKeyValue = convertKeyValue(operation);
 		if (StringUtils.isNotBlank(namespace)) {
-			Cache cache = getCache(operation);
-			cache.put(copyedKeyValue, operation.getExpire(), operation.getCondition());
+			Set<String> existedKey = holder.addCacheKeySet(namespace, copyedKeyValue.keySet());
+			copyedKeyValue.keySet().removeAll(existedKey);
+			if (copyedKeyValue.size() > 0) {
+				Cache cache = getCache(operation);
+				cache.put(copyedKeyValue, operation.getExpire(), operation.getCondition());
+			}
 		}
 		for (Entry<String, Object> entry : operation.getKeyValue().entrySet()) {
 			String key = entry.getKey();
@@ -107,7 +118,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 				Map<String, Object> singleMap = new HashMap<String, Object>();
 				Cache cache = null;
 				for (String ns : namespaces) {
-					if (StringUtils.isNotBlank(ns) && !ns.equals(namespace)) {
+					if (holder.addCacheKey(ns, key)) {
 						cache = getCache(ns);
 						singleMap.clear();
 						singleMap.put(key, copyedKeyValue.get(key));
@@ -116,7 +127,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 				}
 			}
 		}
-		cascadeSaveFields(operation);
+		cascadeSaveFields(operation, holder);
 	}
 	
 	private Map<String, Object> convertKeyValue(CacheSaveOperation operation) {
@@ -129,7 +140,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 		return map;
 	}
 	
-	private void cascadeSaveFields(CacheSaveOperation operation) throws CacheNotExistsException, CacheOperateException {
+	private void cascadeSaveFields(CacheSaveOperation operation, CacheKeyHolder holder) throws CacheNotExistsException, CacheOperateException {
 		for (Entry<String, Object> entry : operation.getKeyValue().entrySet()) {
 			Object cacheObject = entry.getValue();
 			if (cacheObject == null) {
@@ -138,6 +149,9 @@ public abstract class AbstractCacheContext implements CacheContext {
 			List<CacheFieldOperation> operationList = config.getFieldsOperation(cacheObject, cacheObject.getClass());
 			if (CollectionUtils.isNotEmpty(operationList)) {
 				for (CacheFieldOperation cfo : operationList) {
+					if (holder.containsCacheKey(cfo.getNamespace(), cfo.getKey())) {
+						continue;
+					}
 					CacheSaveOperation saveOperation = null;
 					try {
 						saveOperation = cfo.generateCacheSaveOperation(cfo.getKey(), cacheObject, operation.getExpire(), operation.getCondition());
@@ -147,7 +161,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 						throw new CacheOperateException(cfo.getNamespace(), "生成级联保存操作错误: " + cfo.getFieldName());
 					}
 					if (saveOperation != null) {
-						save(saveOperation);
+						save(saveOperation, holder);
 					}
 				}
 			}
@@ -253,6 +267,64 @@ public abstract class AbstractCacheContext implements CacheContext {
 			throw new CacheNotExistsException("Cache not found: " + namespace);
 		}
 		return cache;
+	}
+	
+	private CacheKeyHolder buildHolder() {
+		return new CacheKeyHolder();
+	}
+	
+	/**
+	 * 记录存储的namespace和key, 用于防止重复操作
+	 */
+	class CacheKeyHolder {
+		
+		private Map<String, Set<String>> map = new HashMap<String, Set<String>>();
+		
+		// 添加待缓存key集合, 返回已经存在的部分
+		Set<String> addCacheKeySet(String namespace, Set<String> keySet) {
+			Set<String> existed = new HashSet<String>();
+			if (StringUtils.isNotBlank(namespace) && CollectionUtils.isNotEmpty(keySet)) {
+				Set<String> set = map.get(namespace);
+				if (set == null) {
+					set = new HashSet<String>();
+					map.put(namespace, set);
+				}
+				for (String key : keySet) {
+					if (StringUtils.isBlank(key)) {
+						continue;
+					}
+					if (!set.add(key)) {
+						existed.add(key);
+					}
+				}
+			}
+			return existed;
+		}
+		
+		// 添加待缓存key, 如存在则返回true, 不存在返回false
+		boolean addCacheKey(String namespace, String key) {
+			if (StringUtils.isBlank(namespace) || StringUtils.isBlank(key)) {
+				return false;
+			}
+			Set<String> set = map.get(namespace);
+			if (set == null) {
+				set = new HashSet<String>();
+				map.put(namespace, set);
+			}
+			return set.add(key);
+		}
+		
+		// 返回是否存在待缓存key, 如存在则返回true, 不存在返回false
+		boolean containsCacheKey(String namespace, String key) {
+			if (StringUtils.isBlank(namespace) || StringUtils.isBlank(key)) {
+				return false;
+			}
+			Set<String> set = map.get(namespace);
+			if (set == null) {
+				return false;
+			}
+			return set.contains(key);
+		}
 	}
 
 }
