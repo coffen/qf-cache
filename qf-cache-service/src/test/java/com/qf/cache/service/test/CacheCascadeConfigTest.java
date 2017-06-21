@@ -9,6 +9,7 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.alibaba.fastjson.JSON;
 import com.esotericsoftware.minlog.Log;
 import com.qf.cache.exception.CacheCreateException;
 import com.qf.cache.operation.CacheGetOperation;
@@ -99,20 +100,20 @@ public class CacheCascadeConfigTest {
 				getOperation.setNamespace(namespaceA);
 				getOperation.setKeys(new String[] { key });
 				
-//				Map<String, ModuleA> loaded = 
+				Map<String, ModuleA> loaded = 
 						cacheContent.get(getOperation, ModuleA.class);
-//				Log.error(JSON.toJSONString(loaded));	
+				Log.error(JSON.toJSONString(loaded));
 				
 				CacheGetOperation getOperation2 = new CacheGetOperation();
 				getOperation2.setNamespace(namespaceB);
 				getOperation2.setKeys(new String[] { "1" });
 				
-//				Map<String, InnerModuleB> loaded2 = 
+				Map<String, InnerModuleB> loaded2 = 
 						cacheContent.get(getOperation2, InnerModuleB.class);
-//				Log.error(JSON.toJSONString(loaded2));
+				Log.error(JSON.toJSONString(loaded2));
 			}
 			long end = System.currentTimeMillis();
-			Log.error("结束时间:" + start + ", 耗时: " + (end - start));
+			Log.error("结束时间:" + end + ", 耗时: " + (end - start));
 		}
 		catch (Exception e) {
 			e.printStackTrace();

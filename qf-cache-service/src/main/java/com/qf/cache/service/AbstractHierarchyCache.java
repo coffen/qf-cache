@@ -1,11 +1,9 @@
 package com.qf.cache.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.collections4.CollectionUtils;
+import java.util.Map.Entry;
 
 import com.qf.cache.Cache;
 import com.qf.cache.CacheInfo;
@@ -49,28 +47,27 @@ public abstract class AbstractHierarchyCache implements HierarchyCache {
 	}
 
 	@Override
-	public <T> List<T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
-		List<T> values = local.get(keys, clazz);
-		List<String> remained = new ArrayList<String>();
-		List<Integer> indexs = new ArrayList<Integer>();
-		if (CollectionUtils.isEmpty(values)) {
-			remained.addAll(Arrays.asList(keys));
+	public <T> Map<String, T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
+		Map<String, T> result = local.get(keys, clazz);
+		if (result == null || result.size() != keys.length) {
+			throw new CacheOperateException(getCacheUnit().getNamespace(), "本地缓存返回结果为空或与Keys参数数组长度不匹配");
 		}
-		else {
-			for (int i = 0; i < values.size(); i++) {
-				if (values.get(i) == null) {
-					remained.add(keys[i]);
-					indexs.add(i);
-				}
+		List<String> remained = new ArrayList<String>();
+		for (Entry<String, T> entry : result.entrySet()) {
+			if (entry.getValue() == null) {
+				remained.add(entry.getKey());
 			}
 		}
 		if (remained.size() > 0) {
-			List<T> shardedValue = sharded.get(remained.toArray(new String[0]), clazz);
+			Map<String, T> shardedValue = sharded.get(remained.toArray(new String[0]), clazz);
+			if (shardedValue == null || shardedValue.size() != remained.size()) {
+				throw new CacheOperateException(getCacheUnit().getNamespace(), "分布式缓存返回结果为空或与Keys参数数组长度不匹配");
+			}
 			for (int i = 0; i < remained.size(); i++) {
-				values.set(indexs.get(i), shardedValue.get(i));
+				result.put(remained.get(i), shardedValue.get(remained.get(i)));
 			}
 		}
-		return values;
+		return result;
 	}
 
 	@Override

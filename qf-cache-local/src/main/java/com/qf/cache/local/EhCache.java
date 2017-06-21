@@ -1,9 +1,8 @@
 package com.qf.cache.local;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -137,8 +136,8 @@ public class EhCache implements Cache {
 	}
 
 	@Override
-	public <T> List<T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
-		List<T> list = new ArrayList<T>();
+	public <T> Map<String, T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
+		Map<String, T> result = new HashMap<String, T>();
 		if (keys == null || keys.length == 0 || clazz == null) {
 			log.error("EhCache get参数错误: keys={}, clazz={}", StringUtils.join(keys), clazz);
 			throw new CacheOperateException(namespace, "EhCache get参数错误: keys=" + keys + ",clazz=" + clazz);
@@ -149,21 +148,21 @@ public class EhCache implements Cache {
 			throw new CacheOperateException(namespace, "Ehcache not existed.");
 		}
 		for (String key : keys) {
-			T value = null;
+			T t = null;
 			if (StringUtils.isNotBlank(key)) {
 				byte[] bytes = cache.get(key);
 				if (bytes != null) {
 					try {
-						value = serializer.deSerialize(bytes, clazz);
+						t = serializer.deSerialize(bytes, clazz);
 					}
 					catch (IOException e) {
 						log.error("反序列化失败: " + key, e);
 					}
 				}
 			}
-			list.add(value);
+			result.put(key, t);
 		}
-		return list;
+		return result;
 	}
 
 	@Override

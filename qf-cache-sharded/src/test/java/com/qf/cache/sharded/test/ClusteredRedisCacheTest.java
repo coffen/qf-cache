@@ -2,7 +2,6 @@ package com.qf.cache.sharded.test;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,8 +46,8 @@ public class ClusteredRedisCacheTest {
 		map.put("jzq", new Person("Jiang Zhi Qiang", 168, 140));
 		cache.put(map, 2000L, null);
 		Thread.sleep(1900);
-		List<Person> list = cache.get(new String[] { "zx", "lkf", "jzq" }, Person.class);	
-		for (Person p : list) {
+		Map<String, Person> result = cache.get(new String[] { "zx", "lkf", "jzq" }, Person.class);	
+		for (Person p : result.values()) {
 			log.error(p.getName() + ": " + p);
 		}
 		cache.evict(new String[] { "zx", "lkf", "jzq" });

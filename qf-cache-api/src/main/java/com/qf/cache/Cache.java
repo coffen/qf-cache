@@ -1,6 +1,5 @@
 package com.qf.cache;
 
-import java.util.List;
 import java.util.Map;
 
 import com.qf.cache.exception.CacheOperateException;
@@ -42,7 +41,7 @@ public interface Cache {
 	 * @param keys			查询缓存键值
 	 * @return
 	 */
-	public <T> List<T> get(String[] keys, Class<T> clazz) throws CacheOperateException;
+	public <T> Map<String, T> get(String[] keys, Class<T> clazz) throws CacheOperateException;
 	
 	/**
 	 * <p> 从指定缓存中删除多个缓存键值

@@ -135,10 +135,10 @@ public class ClusteredMemcache implements Cache {
 	}
 
 	@Override
-	public <T> List<T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
+	public <T> Map<String, T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
 		Serializer serializer = config.getSerializer();
 		String namespace = config.getNamespace();
-		List<T> list = new ArrayList<T>();
+		Map<String, T> result = new HashMap<String, T>();
 		if (keys == null || keys.length == 0 || clazz == null) {
 			log.error("ClusteredMemcache get参数错误: keys={}, clazz={}", StringUtils.join(keys), clazz);
 			throw new CacheOperateException(namespace, "ClusteredMemcache get参数错误: keys=" + keys + ",clazz=" + clazz);
@@ -160,22 +160,20 @@ public class ClusteredMemcache implements Cache {
 			}
 			if (map != null && map.size() > 0) {
 				for (Entry<String, byte[]> entry : map.entrySet()) {
+					T t = null;
 					if (entry.getValue() != null) {
 						try {
-							T t = serializer.deSerialize(entry.getValue(), clazz);
-							list.add(t);
+							t = serializer.deSerialize(entry.getValue(), clazz);
 						}
 						catch (IOException e) {
 							log.error("反序列化失败: " + entry.getKey(), e);
 						}
 					}
-					else {
-						list.add(null);
-					}
+					result.put(entry.getKey(), t);
 				}
 			}
 		}
-		return list;
+		return result;
 	}
 
 	@Override

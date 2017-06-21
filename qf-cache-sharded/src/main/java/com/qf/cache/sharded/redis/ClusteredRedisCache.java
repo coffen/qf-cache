@@ -114,10 +114,10 @@ public class ClusteredRedisCache implements Cache {
 	}
 
 	@Override
-	public <T> List<T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
+	public <T> Map<String, T> get(String[] keys, Class<T> clazz) throws CacheOperateException {
 		Serializer serializer = config.getSerializer();
 		String namespace = config.getNamespace();
-		List<T> list = new ArrayList<T>();
+		Map<String, T> result = new HashMap<String, T>();
 		if (keys == null || keys.length == 0 || clazz == null) {
 			log.error("ClusteredRedisCache get参数错误: keys={}, clazz={}", StringUtils.join(keys), clazz);
 			throw new CacheOperateException(namespace, "ClusteredRedisCache get参数错误: keys=" + keys + ",clazz=" + clazz);
@@ -136,16 +136,21 @@ public class ClusteredRedisCache implements Cache {
 			List<byte[]> valueList = jedisCluster.hmget(namespace.getBytes(), serialedKeyArr);
 			if (CollectionUtils.isNotEmpty(valueList)) {
 				for (int i = 0; i < valueList.size(); i++) {
-					try {
-						list.add(serializer.deSerialize(valueList.get(i), clazz));
+					byte[] value = valueList.get(i);
+					T t = null;
+					if (value != null) {
+						try {
+							t = serializer.deSerialize(value, clazz);
+						}
+						catch (IOException e) {
+							log.error("反序列化失败: " + keys[i], e);
+						}
 					}
-					catch (IOException e) {
-						log.error("反序列化失败: " + keys[i], e);
-					}
+					result.put(keys[i], t);
 				}
 			}
 		}
-		return list;
+		return result;
 	}
 
 	@Override
