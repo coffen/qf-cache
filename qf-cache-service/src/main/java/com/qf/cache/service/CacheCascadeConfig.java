@@ -95,7 +95,7 @@ public class CacheCascadeConfig {
 		return copyed;
 	}
 	
-	// 复制对象
+	// 反向复制对象
 	public Object reverseCopyBean(Object obj) {
 		Object copyed = null;
 		if (obj != null) {
@@ -115,7 +115,8 @@ public class CacheCascadeConfig {
 		return copyed;
 	}
 	
-	public Class<?> getTargetClass(Class<?> srcClazz) {
+	// 获取指定类的代理类
+	public Class<?> getTargetSerializedClass(Class<?> srcClazz) {
 		Class<?> targetClazz = null;
 		ClassWrap wrap = clazzMapping.get(srcClazz);
 		if (wrap != null) {
@@ -124,6 +125,7 @@ public class CacheCascadeConfig {
 		return targetClazz;
 	}
 	
+	// 获取指定类的名称空间
 	public String[] getTargetNamespace(Class<?> srcClazz) {
 		String[] namespace = null;
 		ClassWrap wrap = clazzMapping.get(srcClazz);
@@ -133,15 +135,24 @@ public class CacheCascadeConfig {
 		return namespace;
 	}
 	
+	/**
+	 * 获取需要级联缓存操作的属性列表
+	 * 
+	 * @param object	待处理的对象
+	 * @param srcClazz  待处理的类
+	 * @return
+	 */
 	public List<CacheFieldOperation> getFieldsOperation(Object object, Class<?> srcClazz) {
 		List<CacheFieldOperation> operationList = new ArrayList<CacheFieldOperation>();
 		List<FieldWrap> wrapList = fieldMapping.get(srcClazz);
 		if (CollectionUtils.isNotEmpty(wrapList)) {
 			for (FieldWrap wrap : wrapList) {
-				if (wrap == null || wrap.getCascadeType() == CacheCascadeEnum.FULL || wrap.getCascadeType() == CacheCascadeEnum.NONE) {
+				// NONE枚举修饰的属性处理
+				if (wrap == null || wrap.getCascadeType() == CacheCascadeEnum.NONE) {
 					continue;
 				}
 				Field keyField = wrap.getKeyField();
+				// keyField未设置无需处理
 				if (keyField == null) {
 					continue;
 				}
@@ -165,6 +176,13 @@ public class CacheCascadeConfig {
 		return operationList;
 	}
 	
+	/**
+	 * 加载类
+	 * 
+	 * @param clazzNameList
+	 * @return
+	 * @throws ClassParseException
+	 */
 	private List<Class<?>> loadClass(List<String> clazzNameList) throws ClassParseException {
 		List<Class<?>> loadedClazzList = new ArrayList<Class<?>>();
 		String clazz = null;
@@ -180,7 +198,12 @@ public class CacheCascadeConfig {
 		return loadedClazzList;
 	}
 	
-	// 解析缓存类设定
+	/**
+	 * 解析缓存类注解
+	 * 
+	 * @param clazz
+	 * @return
+	 */
 	private ClassWrap parseClass(Class<?> clazz) {
 		if (clazzMapping.containsKey(clazz)) {
 			log.error("{}已经解析过Class", clazz);
@@ -200,7 +223,13 @@ public class CacheCascadeConfig {
 		return wrap;
 	}
 	
-	// 解析缓存变量设定
+	/**
+	 * 解析缓存属性注解
+	 * 
+	 * @param clazz
+	 * @return
+	 * @throws ClassParseException
+	 */
 	private List<FieldWrap> parseField(Class<?> clazz) throws ClassParseException {
 		if (fieldMapping.containsKey(clazz)) {
 			log.error("{}已经解析过Field", clazz);
@@ -243,6 +272,17 @@ public class CacheCascadeConfig {
 		return wrapList;
 	}
 	
+	/**
+	 * <p>创建代理类</p>
+	 * <p>
+	 * 如果类的父类有CacheType注解, 则代理类的父类变为父类代理类;</p>
+	 * <p>
+	 * 如果类属性有CacheField注解, 按条件判断是否可序列化的, 如不需要序列化, 添加transient修饰符</p>
+	 * 
+	 * @param clazz
+	 * @param fieldWrapList
+	 * @return
+	 */
 	private Class<?> buildTargetClass(Class<?> clazz, List<FieldWrap> fieldWrapList) {
 		ClassWrap clazzWrap = clazzMapping.get(clazz);
 		if (clazzWrap == null) {
@@ -266,7 +306,7 @@ public class CacheCascadeConfig {
 				parentSerializeClazz = buildTargetClass(parentClazz, fieldMapping.get(parentClazz));
 			}
 		}
-		// 遍历获取须设置为transient的Field
+		// 遍历判断那些属性不需要序列化, 添加transient修饰符
 		List<Field> noneSerializedFields = new ArrayList<Field>();
 		for (FieldWrap fw : fieldWrapList) {
 			if (fw.getCascadeType() == CacheCascadeEnum.NONE || fw.getCascadeType() == CacheCascadeEnum.ISOLATE || (fw.getCascadeType() == CacheCascadeEnum.DEPENDS && fw.getNamespace() != null)) {
@@ -290,6 +330,7 @@ public class CacheCascadeConfig {
 			}
 			Class<?> targetClazz = ctClazz.toClass(clazz.getClassLoader(), clazz.getProtectionDomain());
 			clazzWrap.setSerializeClazz(targetClazz);
+			// 设置类对象的复制工具和反向复制工具
 			clazzWrap.setCopier(BeanCopier.create(clazz, targetClazz, false));
 			clazzWrap.setReverseCopier(BeanCopier.create(targetClazz, clazz, false));
 			
@@ -303,6 +344,7 @@ public class CacheCascadeConfig {
 		}
 	}
 	
+	// 判断CacheType的namespace是否有效
 	private boolean checkNamespaces(String[] namespaces) {
 		if (namespaces == null || namespaces.length == 0) {
 			return false;
@@ -317,7 +359,7 @@ public class CacheCascadeConfig {
 	}
 	
 	/**
-	 * 类封装, 包括字节码类, 名称空间
+	 * 类封装, 包括代理类, 名称空间
 	 */
 	class ClassWrap {
 		

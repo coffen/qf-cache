@@ -61,6 +61,7 @@ public class CacheFieldOperation implements CacheOperation, Serializable {
 		return field == null ? null : field.getType();
 	}
 	
+	// 生成级联属性的缓存操作
 	public CacheSaveOperation generateCacheSaveOperation(String key, Object obj, Long expire, CacheSaveConditionEnum condition) throws IllegalArgumentException, IllegalAccessException {
 		if (StringUtils.isBlank(key) || obj == null) {
 			return null;

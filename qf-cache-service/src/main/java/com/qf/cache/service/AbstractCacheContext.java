@@ -97,9 +97,20 @@ public abstract class AbstractCacheContext implements CacheContext {
 		save(operation, holder);
 	}
 	
+	/**
+	 * 首先按CacheSaveOperation设定的namespace保存对象, 然后按缓存对象类的CacheType注解指定的namespace保存
+	 * 
+	 * CacheKeyHolder用于存储当前操作已缓存的对象, 防止类相互引用时出现的死循环操作
+	 * 
+	 * @param operation
+	 * @param holder
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
 	private void save(CacheSaveOperation operation, CacheKeyHolder holder) throws CacheNotExistsException, CacheOperateException {
 		String namespace = operation.getNamespace();
 		Map<String, Object> copyedKeyValue = convertKeyValue(operation);
+		
 		if (StringUtils.isNotBlank(namespace)) {
 			Set<String> existedKey = holder.addCacheKeySet(namespace, copyedKeyValue.keySet());
 			copyedKeyValue.keySet().removeAll(existedKey);
@@ -108,6 +119,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 				cache.put(copyedKeyValue, operation.getExpire(), operation.getCondition());
 			}
 		}
+		
 		for (Entry<String, Object> entry : operation.getKeyValue().entrySet()) {
 			String key = entry.getKey();
 			Object cacheObject = entry.getValue();
@@ -119,6 +131,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 				Map<String, Object> singleMap = new HashMap<String, Object>();
 				Cache cache = null;
 				for (String ns : namespaces) {
+					// 添加成功, 则进行缓存操作
 					if (holder.addCacheKey(ns, key)) {
 						cache = getCache(ns);
 						singleMap.clear();
@@ -131,6 +144,12 @@ public abstract class AbstractCacheContext implements CacheContext {
 		cascadeSaveFields(operation, holder);
 	}
 	
+	/**
+	 * 复制原对象, 生成代理类的对象, 序列化器根据代理类来决定过滤哪些属性
+	 * 
+	 * @param operation
+	 * @return
+	 */
 	private Map<String, Object> convertKeyValue(CacheSaveOperation operation) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		if (operation != null && operation.getKeyValue() != null) {
@@ -141,6 +160,21 @@ public abstract class AbstractCacheContext implements CacheContext {
 		return map;
 	}
 	
+	/**
+	 * <p>级联缓存类属性</p> 
+	 * 
+	 * <p>类属性的级联操作首先需要设定关联属性（keyField）, ShopInfo是Product对象中待级联缓存的属性, 
+	 * shopId的值（需转换为String）就是ShopInfo缓存的key; 如果关联属性未指定或者值为空, 则ShopInfo无需缓存</p>
+	 * 
+	 * Product
+	 *  |-- shopId (Key)
+	 *  |-- ShopInfo (CacheField)
+	 * 
+	 * @param operation
+	 * @param holder
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
 	private void cascadeSaveFields(CacheSaveOperation operation, CacheKeyHolder holder) throws CacheNotExistsException, CacheOperateException {
 		for (Entry<String, Object> entry : operation.getKeyValue().entrySet()) {
 			Object cacheObject = entry.getValue();
@@ -178,6 +212,17 @@ public abstract class AbstractCacheContext implements CacheContext {
 		return get(operation, clazz, holder);
 	}
 	
+	/**
+	 * 首先按CacheGetOperation指定的namespace加载缓存, 如未设定则按缓存对象类的CacheType注解指定的namespace加载
+	 * 读取的缓存对象由于是按代理类进行序列化的, 需要反向复制为原生类的对象
+	 * 
+	 * @param operation
+	 * @param clazz
+	 * @param holder
+	 * @return
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
 	@SuppressWarnings("unchecked")
 	private <T> Map<String, T> get(CacheGetOperation operation, Class<T> clazz, CacheObjectHolder holder) throws CacheNotExistsException, CacheOperateException {
 		if (clazz == null) {
@@ -185,7 +230,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 		}
 		String namespace = operation.getNamespace();
 		String[] keys = operation.getKeys();
-		Class<?> serializeClazz = config.getTargetClass(clazz);
+		Class<?> serializeClazz = config.getTargetSerializedClass(clazz);
 		if (serializeClazz == null) {
 			serializeClazz = Object.class;
 		}
@@ -196,6 +241,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 			}
 			namespace = namespaces[0];
 		}
+		// 查询CacheObjectHolder不存在的Key列表, 从缓存中加载
 		String[] needToGetKeys = holder.getNoneCachedKeys(namespace, keys);
 		if (needToGetKeys != null && needToGetKeys.length > 0) {
 			Cache cache = getCache(namespace);
@@ -209,7 +255,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 		for (int i = 0; i < keys.length; i++) {
 			Object obj = holder.getCachedObject(namespace, keys[i]);
 			Object copyed = config.reverseCopyBean(obj);
-			holder.addCacheObject(namespace, keys[i], copyed);
+			holder.addCacheObject(namespace, keys[i], copyed);	// 需在级联操作前将holder中缓存对象替换为反向复制的对象
 			fulfillFields(copyed, clazz, holder);
 			T t = null;
 			if (copyed != null) {
@@ -220,6 +266,15 @@ public abstract class AbstractCacheContext implements CacheContext {
 		return result;
 	}
 	
+	/**
+	 * 级联加载对象中有CacheField注解的属性
+	 * 
+	 * @param obj
+	 * @param clazz
+	 * @param holder
+	 * @throws CacheNotExistsException
+	 * @throws CacheOperateException
+	 */
 	private void fulfillFields(Object obj, Class<?> clazz, CacheObjectHolder holder) throws CacheNotExistsException, CacheOperateException {
 		List<CacheFieldOperation> operationList = config.getFieldsOperation(obj, clazz);
 		if (CollectionUtils.isNotEmpty(operationList)) {
@@ -235,7 +290,6 @@ public abstract class AbstractCacheContext implements CacheContext {
 					if (fieldValue == null || fieldValue.size() != 1) {
 						throw new CacheOperateException(namespace, "Cache batch get result error: operation is null or not conform the input keys length.");
 					}
-					holder.addCacheObjectSet(namespace, fieldValue);
 				}
 				Object fieldObject = holder.getCachedObject(namespace, key);
 				if (fieldObject != null) {
@@ -305,7 +359,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 	}
 	
 	/**
-	 * 记录存储的namespace和key, 用于防止重复操作
+	 * 记录存储的namespace和key, 用于防止缓存写入时重复保存的问题
 	 */
 	class CacheKeyHolder {
 		
@@ -359,12 +413,13 @@ public abstract class AbstractCacheContext implements CacheContext {
 	}
 	
 	/**
-	 * 记录存储的namespace和key/value, 用于防止重复操作
+	 * 记录存储的namespace和key/value, 用于防止缓存写入时重复读取的问题
 	 */
 	class CacheObjectHolder {
 		
 		private Map<String, Map<String, Object>> map = new HashMap<String, Map<String, Object>>();
 		
+		// 获取本地缓存对象
 		Object getCachedObject(String namespace, String key) {
 			Object cached = null;
 			if (StringUtils.isNotBlank(namespace) && StringUtils.isNotBlank(key)) {
@@ -376,6 +431,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 			return cached;
 		}
 		
+		// 获取本地缓存对象集
 		Map<String, Object> getCachedObjectMap(String namespace, String[] keys) {
 			Map<String, Object> cached = new HashMap<String, Object>();
 			if (StringUtils.isNotBlank(namespace) && keys != null && keys.length > 0) {
@@ -391,6 +447,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 			return cached;
 		}
 		
+		// 获取本地缓存的key集合
 		String[] getCachedKeys(String namespace, String[] keys) {
 			List<String> existed = new ArrayList<String>();
 			if (StringUtils.isNotBlank(namespace) && keys != null && keys.length > 0) {
@@ -406,6 +463,7 @@ public abstract class AbstractCacheContext implements CacheContext {
 			return existed.toArray(new String[0]);
 		}
 		
+		// 获取未本地缓存的key集合
 		String[] getNoneCachedKeys(String namespace, String[] keys) {
 			List<String> remained = new ArrayList<String>();
 			if (StringUtils.isNotBlank(namespace) && keys != null && keys.length > 0) {
