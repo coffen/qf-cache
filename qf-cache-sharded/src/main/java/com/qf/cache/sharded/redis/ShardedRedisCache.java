@@ -126,7 +126,7 @@ public class ShardedRedisCache implements Cache {
 		Map<String, T> result = new HashMap<String, T>();
 		if (keys == null || keys.length == 0 || clazz == null) {
 			log.error("ShardedRedisCache get参数错误: keys={}, clazz={}", StringUtils.join(keys), clazz);
-			throw new CacheOperateException(namespace, "ShardedRedisCache get参数错误: keys=" + keys + ",clazz=" + clazz);
+			throw new CacheOperateException(namespace, "ShardedRedisCache get参数错误: keys=" + StringUtils.join(keys) + ",clazz=" + clazz);
 		}
 		List<byte[]> serialedKeyList = new ArrayList<byte[]>();
 		for (String key : keys) {
@@ -167,7 +167,7 @@ public class ShardedRedisCache implements Cache {
 		long delCount = 0L;
 		if (keys == null || keys.length == 0) {
 			log.error("ShardedRedisCache evict参数错误: keys={}", StringUtils.join(keys));
-			throw new CacheOperateException(namespace, "ShardedRedisCache evict参数错误: keys=" + keys);
+			throw new CacheOperateException(namespace, "ShardedRedisCache evict参数错误: keys=" + StringUtils.join(keys));
 		}
 		List<byte[]> serialedKeyList = new ArrayList<byte[]>();
 		for (String key : keys) {
@@ -223,8 +223,8 @@ public class ShardedRedisCache implements Cache {
 		return shardedJedisPool;
 	}
 	
-	public void setShardedJedisPool(ShardedJedisPool shardedJedisPool) {
-		ShardedRedisCache.shardedJedisPool = shardedJedisPool;
+	public void setShardedJedisPool(ShardedJedisPool pool) {
+		shardedJedisPool = pool;
 	}
 
 }

@@ -80,15 +80,17 @@ public class ClasspathPackageScanner {
             }
         });
 		
-		for (File file : dirfiles) {
-            if (file.isDirectory()) {
-            	readFromDirectory(packageName + "." + file.getName(), file.getAbsolutePath(), clazzList);
-            } 
-            else {
-                String className = file.getName().substring(0, file.getName().length() - 6);
-               	clazzList.add(packageName + '.' + className);
-            }
-        }
+		if (dirfiles != null && dirfiles.length > 0) {
+			for (File file : dirfiles) {
+	            if (file.isDirectory()) {
+	            	readFromDirectory(packageName + "." + file.getName(), file.getAbsolutePath(), clazzList);
+	            } 
+	            else {
+	                String className = file.getName().substring(0, file.getName().length() - 6);
+	               	clazzList.add(packageName + '.' + className);
+	            }
+	        }
+		}
 		return clazzList;
 	}
 

@@ -1,6 +1,5 @@
 package com.qf.cache.operation;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,10 +27,8 @@ import com.qf.cache.CacheSaveConditionEnum;
  * @version: v1.0
  *
  */
-public class CacheFieldOperation implements CacheOperation, Serializable {
+public class CacheFieldOperation implements CacheOperation {
 
-	private static final long serialVersionUID = 7881021932627134961L;
-	
 	private Field field;
 	
 	private String namespace;

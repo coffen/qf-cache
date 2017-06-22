@@ -100,11 +100,11 @@ public class ClassUtils {
 					log.error("CacheField注解key值对应属性不能设置为当前注解的属性");
 					keyField = null;
 				}
-				if (keyField.isAnnotationPresent(CacheField.class)) {
+				else if (keyField.isAnnotationPresent(CacheField.class)) {
 					log.error("CacheField注解key值对应属性不能有CacheField注解");
 					keyField = null;
 				}
-				if ((keyField.getModifiers() & 8) != 0 || (keyField.getModifiers() & 128) != 0) {
+				else if ((keyField.getModifiers() & 8) != 0 || (keyField.getModifiers() & 128) != 0) {
 					log.error("CacheField注解key值对应属性不能包含transient或static修饰符");
 					keyField = null;
 				}

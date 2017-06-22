@@ -77,10 +77,12 @@ public abstract class AbstractCacheContext implements CacheContext {
 	public void addCache(Cache cache) {
 		if (cache == null) {
 			log.error("添加缓存错误, 参数为空");
+			return;
 		}
 		CacheUnit unit = cache.getCacheUnit();
 		if (unit == null) {
 			log.error("缓存单元获取失败");
+			return;
 		}
 		if (cacheMap.containsKey(unit.getNamespace())) {
 			log.error("缓存已添加: {}", unit.getNamespace());

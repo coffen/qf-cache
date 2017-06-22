@@ -141,7 +141,7 @@ public class ClusteredMemcache implements Cache {
 		Map<String, T> result = new HashMap<String, T>();
 		if (keys == null || keys.length == 0 || clazz == null) {
 			log.error("ClusteredMemcache get参数错误: keys={}, clazz={}", StringUtils.join(keys), clazz);
-			throw new CacheOperateException(namespace, "ClusteredMemcache get参数错误: keys=" + keys + ",clazz=" + clazz);
+			throw new CacheOperateException(namespace, "ClusteredMemcache get参数错误: keys=" + StringUtils.join(keys) + ",clazz=" + clazz);
 		}
 		List<String> serialedKeyList = new ArrayList<String>();
 		for (String key : keys) {
@@ -182,7 +182,7 @@ public class ClusteredMemcache implements Cache {
 		long delCount = 0;
 		if (keys == null || keys.length == 0) {
 			log.error("ClusteredMemcache evict参数错误: keys={}", StringUtils.join(keys));
-			throw new CacheOperateException(namespace, "ClusteredMemcache evict参数错误: keys=" + keys);
+			throw new CacheOperateException(namespace, "ClusteredMemcache evict参数错误: keys=" + StringUtils.join(keys));
 		}
 		for (String key : keys) {
 			if (StringUtils.isNotBlank(key)) {
@@ -218,8 +218,8 @@ public class ClusteredMemcache implements Cache {
 		return memcachedClient;
 	}
 	
-	public void setMemcachedClient(MemcachedClient memcachedClient) {
-		ClusteredMemcache.memcachedClient = memcachedClient;
+	public void setMemcachedClient(MemcachedClient client) {
+		memcachedClient = client;
 	}
 	
 	private String buildKey(String namespace, String key) {

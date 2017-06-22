@@ -120,7 +120,7 @@ public class ClusteredRedisCache implements Cache {
 		Map<String, T> result = new HashMap<String, T>();
 		if (keys == null || keys.length == 0 || clazz == null) {
 			log.error("ClusteredRedisCache get参数错误: keys={}, clazz={}", StringUtils.join(keys), clazz);
-			throw new CacheOperateException(namespace, "ClusteredRedisCache get参数错误: keys=" + keys + ",clazz=" + clazz);
+			throw new CacheOperateException(namespace, "ClusteredRedisCache get参数错误: keys=" + StringUtils.join(keys) + ",clazz=" + clazz);
 		}
 		List<byte[]> serialedKeyList = new ArrayList<byte[]>();
 		for (String key : keys) {
@@ -159,7 +159,7 @@ public class ClusteredRedisCache implements Cache {
 		long delCount = 0;
 		if (keys == null || keys.length == 0) {
 			log.error("ClusteredRedisCache evict参数错误: keys={}", StringUtils.join(keys));
-			throw new CacheOperateException(namespace, "ClusteredRedisCache evict参数错误: keys=" + keys);
+			throw new CacheOperateException(namespace, "ClusteredRedisCache evict参数错误: keys=" + StringUtils.join(keys));
 		}
 		List<byte[]> serialedKeyList = new ArrayList<byte[]>();
 		for (String key : keys) {

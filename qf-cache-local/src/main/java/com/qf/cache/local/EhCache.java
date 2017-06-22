@@ -140,7 +140,7 @@ public class EhCache implements Cache {
 		Map<String, T> result = new HashMap<String, T>();
 		if (keys == null || keys.length == 0 || clazz == null) {
 			log.error("EhCache get参数错误: keys={}, clazz={}", StringUtils.join(keys), clazz);
-			throw new CacheOperateException(namespace, "EhCache get参数错误: keys=" + keys + ",clazz=" + clazz);
+			throw new CacheOperateException(namespace, "EhCache get参数错误: keys=" + StringUtils.join(keys) + ",clazz=" + clazz);
 		}
 		org.ehcache.Cache<String, byte[]> cache = cacheManager.getCache(namespace, String.class, byte[].class);
 		if (cache == null) {
@@ -169,7 +169,7 @@ public class EhCache implements Cache {
 	public int evict(String[] keys) throws CacheOperateException {
 		if (keys == null || keys.length == 0) {
 			log.error("EhCache evict参数错误: keys={}", StringUtils.join(keys));
-			throw new CacheOperateException(namespace, "EhCache evict参数错误: keys=" + keys);
+			throw new CacheOperateException(namespace, "EhCache evict参数错误: keys=" + StringUtils.join(keys));
 		}
 		org.ehcache.Cache<String, Object> cache = cacheManager.getCache(namespace, String.class, Object.class);
 		if (cache == null) {

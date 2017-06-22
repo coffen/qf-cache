@@ -48,7 +48,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Map<K,V> {
     }
     
     public SoftHashMap(int initialCapacity, float loadFactor) {
-    	map = new SoftHashMap<K, SoftValue>(initialCapacity, loadFactor);
+    	map = new HashMap<K, SoftValue>(initialCapacity, loadFactor);
     	init();
     }
     
