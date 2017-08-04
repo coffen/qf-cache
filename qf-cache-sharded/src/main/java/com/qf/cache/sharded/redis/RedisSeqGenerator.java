@@ -36,7 +36,7 @@ public class RedisSeqGenerator {
 	private static Logger log = LoggerFactory.getLogger(RedisSeqGenerator.class);
 	
 	private final JedisCluster jedisCluster;
-	private String scriptPath = "/lua/redis-script.lua";
+	private String scriptPath = "/lua/redis-seq-generator.lua";
 	
 	private Map<String, String> mapping = new HashMap<String, String>();
 	private String script;
